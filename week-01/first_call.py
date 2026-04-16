@@ -8,7 +8,7 @@ client = Groq(api_key = os.environ.get("GROQ_API_KEY"))
 
 response = client.chat.completions.create(
    model="llama-3.3-70b-versatile",
-    messages = [
+    messages = [ #list of dictionaries that represent the conversation history
         {"role": "user", "content": "I already have the groq Python package installed and my API key in a .env file. Write a script that connects to Groq API and prints the response."
          }
     ]

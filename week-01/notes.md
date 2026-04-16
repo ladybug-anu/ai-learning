@@ -15,3 +15,18 @@ day 2 14th april 2026
     5. built a working chatbot terminal and can set personalities 
     6. learnt about context window limits and token accumulation problem
     7. Prompt injection is overriding system message mid conversation
+
+day 3 15th april 2026
+    1. Learned the difference between gen output and structured output
+    2. AI can return only json which we can parse and use for our work
+    3. System prompt controls output strictly
+    4. Output reliability that is based on this is a real challenge
+    5. json.loads() parses AI response into python objects
+    6. Production apps need to have try catch around JSON parsing in case LLM sent more than what we asked for
+
+day 4 16th april 2026
+    1. time to first token, how much time before user sees first word in a streaming response
+    2. streaming chunks
+    3. flush, stream, delta, flush means display as it comes, stream means send as soon as generated, delta is the difference 
+    4. made streaming chatbot
+    

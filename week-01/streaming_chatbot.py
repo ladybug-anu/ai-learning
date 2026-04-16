@@ -24,20 +24,28 @@ while True:
         'content': user_input
     })
 
-    response = client.chat.completions.create(
+    stream = client.chat.completions.create(
         model='llama-3.3-70b-versatile',
         messages=[
             {'role': 'system', 'content':system_message}
         ] + conversation_history
+        , stream=True
 
     ) 
-    bot_reply = response.choices[0].message.content
+    bot_reply = ''
+
+    for chunk in stream:
+        content = chunk.choices[0].delta.content
+        if content is not None:
+            print(content , end = "", flush = True)
+            bot_reply+= content
+    print('\n')
+
 
     conversation_history.append({
         'role': 'assistant',
         'content': bot_reply
     })
 
-    print(f"AnuBot: {bot_reply}\n")
     
       
