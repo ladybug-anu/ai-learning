@@ -30,3 +30,12 @@ day 4 16th april 2026
     3. flush, stream, delta, flush means display as it comes, stream means send as soon as generated, delta is the difference 
     4. made streaming chatbot
     
+day 5 21st april 2026
+    1. AI can't run code itself, it decides which function to call and then we run it from our script
+    2. tools list is a function description for AI to read and understand what tools we have available for what use
+    3. tool calls is AI decision of which function to call and what parameters to give
+    4. available tools dict is cleaner way to call functions if multiple tools are present
+    5. functions are first class objects and can be stored in dicts
+    6. messages. append for response happens outside loop
+    7. tool result inside loop for each tool that is being called
+    
