@@ -25,3 +25,14 @@ data, no internet. Output streams in real time.
 pip install groq python-dotenv
 Add GROQ_API_KEY to .env
 python bangalore_assistant.py
+
+# Interactive AI Assistant
+
+## Tech
+Groq API
+LLaMA
+Streaming Responses
+Deployed on web
+
+## Use it
+https://ai-learning-interactive-assistant.streamlit.app/
