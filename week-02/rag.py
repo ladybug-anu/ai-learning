@@ -51,7 +51,14 @@ def chunk_text(text: str, pages: list[str], size: int = 500, overlap: int = 50) 
 # build index
 def build_index(chunks: list[str], chunk_pages: list[int]) -> chromadb.Collection:
     client = chromadb.Client()
-    collection = client.create_collection("sadhesati")
+    
+    # Delete if exists, then create fresh — avoids stale data conflicts
+    try:
+        client.delete_collection("user_doc")
+    except Exception:
+        pass
+    
+    collection = client.create_collection("user_doc")
     embeddings = model.encode(chunks).tolist()
     collection.add(
         documents=chunks,
