@@ -59,4 +59,8 @@ additionally, added query rewriting in case of vague follow up questions.
 1. increased rolling window limits to preserve more memory
 2. added reference to the original doc - gives excerpts in interactive-pdf-reader-memory-citation and then give page numbers, will probably refine this later
 
+**day 8 30th june 2026**
+deployed on Streamlit UI
+I had a stale state bug across sessions in a multi-tenant context, traced it to a hardcoded collection name, fixed it with a delete-then-create pattern
+
 
