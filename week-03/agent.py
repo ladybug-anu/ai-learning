@@ -2,6 +2,7 @@ from groq import Groq
 from dotenv import load_dotenv
 import os
 import json
+import requests
 
 load_dotenv()
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
@@ -16,14 +17,45 @@ def get_weather(city: str) -> str:
     }
     return weather.get(city.lower(), f"No weather data for {city}")
 
+# def get_news(topic: str) -> str:
+#     # Fake implementation for now
+#     news = {
+#         "ai": "OpenAI released new model. Google announced Gemini updates. Anthropic raised funding.",
+#         "cricket": "India won the test match. Virat Kohli scored century. IPL auction next month.",
+#         "bangalore": "Metro extended to Whitefield. New tech park opening in Devanahalli.",
+#     }
+#     return news.get(topic.lower(), f"No news found for {topic}")
+
+
+
 def get_news(topic: str) -> str:
-    # Fake implementation for now
-    news = {
-        "ai": "OpenAI released new model. Google announced Gemini updates. Anthropic raised funding.",
-        "cricket": "India won the test match. Virat Kohli scored century. IPL auction next month.",
-        "bangalore": "Metro extended to Whitefield. New tech park opening in Devanahalli.",
+    api_key = os.environ.get("NEWS_API_KEY")
+    url = "https://newsapi.org/v2/everything"
+    
+    params = {
+        "q": topic,
+        "sortBy": "publishedAt",
+        "pageSize": 3,        # only get 3 articles
+        "language": "en",
+        "apiKey": api_key
     }
-    return news.get(topic.lower(), f"No news found for {topic}")
+    
+    response = requests.get(url, params=params)
+    data = response.json()
+    
+    if data["status"] != "ok":
+        return f"Could not fetch news for {topic}"
+    
+    articles = data["articles"]
+    if not articles:
+        return f"No news found for {topic}"
+    
+    # Format the top 3 articles into a clean string
+    results = []
+    for a in articles:
+        results.append(f"- {a['title']} ({a['source']['name']})")
+    
+    return f"Latest news about {topic}:\n" + "\n".join(results)
 
 def calculate(expression: str) -> str:
     try:
@@ -89,7 +121,7 @@ def run_agent(user_input: str) -> str:
     print(f"\n🤔 Thinking about: {user_input}")
     
     messages = [
-        {"role": "system", "content": "You are a helpful assistant. Use tools to answer questions. You can call multiple tools if needed."},
+        {"role": "system", "content": "You are a helpful assistant. Use tools to answer questions. When you get tool results, always include the actual content from the results in your final answer — don't just summarise, show the real data."},
         {"role": "user", "content": user_input}
     ]
     
