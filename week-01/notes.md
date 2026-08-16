@@ -63,4 +63,15 @@ additionally, added query rewriting in case of vague follow up questions.
 deployed on Streamlit UI
 I had a stale state bug across sessions in a multi-tenant context, traced it to a hardcoded collection name, fixed it with a delete-then-create pattern
 
+**day 9 1st july 2026**
+ReAct program, code running, need to understand
+
+**day 10 8th July 2026**
+Chunk text function:
+- range step = size - overlap (not size)
+- slice = text[i:i+size] (always full size)
+- overlap only affects where next chunk STARTS
+- string slicing: text[start:end]
+- snake_case not camelCase in Python
+- try/except around risky operations (user input, type conversion)
 

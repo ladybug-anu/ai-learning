@@ -1,0 +1,2843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Transition Hub</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root{
+    --bg:#12161d; --surface:#1a212b; --surface-2:#212a36; --line:#2a3441;
+    --text:#e7eaee; --muted:#8b95a3; --amber:#f2a93b; --amber-dim:#7a5a24;
+    --green:#4ade80;
+    --font-disp:'Space Grotesk',sans-serif; --font-body:'Inter',sans-serif; --font-mono:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-body);-webkit-font-smoothing:antialiased;padding-bottom:60px;}
+  .wrap{max-width:680px;margin:0 auto;padding:28px 20px 20px;}
+
+  .eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);margin-bottom:6px;}
+  h1{font-family:var(--font-disp);font-weight:700;font-size:26px;margin:0 0 4px;letter-spacing:-0.01em;}
+  .sub{color:var(--muted);font-size:13.5px;margin-bottom:22px;}
+
+  .back{
+    display:inline-flex;align-items:center;gap:6px;
+    font-family:var(--font-mono);font-size:12px;color:var(--muted);
+    background:none;border:1px solid var(--line);padding:7px 13px;border-radius:8px;
+    cursor:pointer;margin-bottom:20px;
+  }
+  .back:hover{color:var(--text);border-color:var(--amber-dim);}
+
+  /* Gauge */
+  .gauge-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;margin-bottom:16px;}
+  .gauge-labels{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:12px;color:var(--muted);margin-bottom:8px;}
+  .gauge-labels .now{color:var(--text);font-weight:500;}
+  .gauge-labels .target{color:var(--amber);font-weight:500;}
+  .gauge-track{position:relative;height:14px;background:var(--surface-2);border-radius:8px;overflow:hidden;border:1px solid var(--line);}
+  .gauge-fill{height:100%;background:linear-gradient(90deg,#c98a2e,var(--amber));border-radius:8px 0 0 8px;transition:width .5s ease;position:relative;}
+  .gauge-fill::after{content:'';position:absolute;right:0;top:0;bottom:0;width:3px;background:#fff;opacity:.6;}
+  .gauge-foot{display:flex;justify-content:space-between;margin-top:8px;font-size:12px;color:var(--muted);}
+  .gauge-foot b{color:var(--green);font-weight:600;}
+
+  .stats{display:flex;gap:10px;margin-bottom:22px;}
+  .stat{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
+  .stat .n{font-family:var(--font-disp);font-size:20px;font-weight:700;}
+  .stat .l{font-family:var(--font-mono);font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:2px;}
+
+  /* Phases */
+  .phase{margin-bottom:14px;}
+  .phase-head{
+    display:flex;align-items:center;gap:10px;padding:14px 16px;
+    background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    cursor:pointer;user-select:none;
+  }
+  .phase-head .tag{font-family:var(--font-mono);font-size:11px;color:var(--amber);background:rgba(242,169,59,0.1);border:1px solid var(--amber-dim);padding:2px 8px;border-radius:6px;white-space:nowrap;}
+  .phase-head .title{font-family:var(--font-disp);font-weight:700;font-size:15px;flex:1;}
+  .phase-head .count{font-family:var(--font-mono);font-size:12px;color:var(--muted);}
+  .phase-head .chev{color:var(--muted);transition:transform .25s;font-size:12px;}
+  .phase.open .chev{transform:rotate(90deg);}
+  .phase-body{max-height:0;overflow:hidden;transition:max-height .3s ease;}
+  .phase.open .phase-body{max-height:1200px;}
+
+  .task{display:flex;align-items:flex-start;gap:12px;padding:12px 16px 12px 20px;border-left:1px solid var(--line);margin-left:24px;}
+  .task:last-child{padding-bottom:16px;}
+  .box{
+    width:19px;height:19px;border-radius:5px;border:1.5px solid var(--muted);
+    flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;transition:.15s;
+  }
+  .box.checked{background:var(--green);border-color:var(--green);}
+  .box.checked::after{content:'\2713';font-size:12px;color:#0d1410;font-weight:700;}
+  .task-text{font-size:13.5px;line-height:1.5;flex:1;}
+  .task.done .task-text{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line);}
+  .lesson-link{
+    display:inline-flex;align-items:center;gap:5px;
+    font-family:var(--font-mono);font-size:11px;color:var(--amber);
+    background:rgba(242,169,59,0.08);border:1px solid var(--amber-dim);
+    padding:3px 9px;border-radius:6px;cursor:pointer;
+    margin-top:6px;user-select:none;
+  }
+  .lesson-link:hover{background:rgba(242,169,59,0.16);}
+
+  .sync-warn{
+    background:rgba(248,113,113,0.08);border:1px solid #7a3030;
+    color:#f3b7b7;font-size:12.5px;line-height:1.5;
+    padding:12px 14px;border-radius:10px;margin-bottom:18px;
+  }
+  .sync-warn b{color:#fff;}
+
+  .backup-row{display:flex;gap:10px;margin-top:22px;}
+  .backup-btn{
+    flex:1;background:var(--surface);border:1px solid var(--line);
+    color:var(--text);font-family:var(--font-mono);font-size:11.5px;
+    padding:10px 12px;border-radius:9px;cursor:pointer;letter-spacing:.02em;
+  }
+  .backup-btn:hover{border-color:var(--amber-dim);}
+
+  .reset{display:block;margin:14px auto 0;background:none;border:1px solid var(--line);color:var(--muted);font-family:var(--font-mono);font-size:11px;padding:8px 14px;border-radius:8px;cursor:pointer;letter-spacing:.04em;}
+  .loading{color:var(--muted);font-family:var(--font-mono);font-size:12px;padding:20px;text-align:center;}
+
+  /* Lesson page */
+  h2{font-family:var(--font-disp);font-weight:700;font-size:16px;margin:26px 0 10px;}
+  p{font-size:14px;line-height:1.65;color:#cdd3db;margin:0 0 12px;}
+  ul,ol{font-size:14px;line-height:1.65;color:#cdd3db;padding-left:20px;margin:0 0 12px;}
+  li{margin-bottom:4px;}
+  code{font-family:var(--font-mono);background:var(--surface-2);padding:1px 5px;border-radius:4px;font-size:12.5px;color:var(--amber);}
+  pre{background:#0d1117;border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;margin:0 0 14px;}
+  pre code{background:none;padding:0;color:#c9d1d9;font-size:12.5px;line-height:1.6;}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0;}
+  .practice-item{margin-bottom:10px;}
+  details{margin-top:6px;}
+  summary{font-family:var(--font-mono);font-size:11.5px;color:var(--muted);cursor:pointer;user-select:none;}
+  details[open] summary{color:var(--amber);}
+  .hint-box,.answer-box{margin-top:8px;padding:10px 12px;background:var(--surface-2);border-radius:8px;border-left:2px solid var(--amber-dim);font-size:13px;color:#cdd3db;}
+  .answer-box{border-left-color:var(--green);}
+  .answer-box pre{margin-top:8px;margin-bottom:0;}
+  .quiz-q{font-weight:500;font-size:13.5px;margin-bottom:6px;color:var(--text);}
+  .quiz-block{margin-bottom:16px;}
+  .links{display:flex;flex-direction:column;gap:8px;margin-top:6px;}
+  .link-item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--surface-2);border-radius:8px;font-size:13px;text-decoration:none;color:var(--text);border:1px solid var(--line);}
+  .link-item:hover{border-color:var(--amber-dim);}
+  .link-item .arrow{color:var(--amber);font-family:var(--font-mono);font-size:12px;}
+  .module-nav-btns{display:flex;justify-content:space-between;margin-top:30px;gap:10px;}
+  .nb{font-family:var(--font-mono);font-size:12px;color:var(--muted);background:none;border:1px solid var(--line);padding:8px 14px;border-radius:8px;cursor:pointer;}
+  .nb:hover{color:var(--text);border-color:var(--amber-dim);}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="loading">loading&hellip;</div>
+</div>
+
+<script>
+/* ================= LESSON MODULES ================= */
+const MODULES = [
+{
+  group:'PYTHON FOUNDATIONS',
+  id:'variables', title:'Variables & Data Types',
+  lesson:`
+    <p>A <b>variable</b> is just a labeled box that holds a value. You give it a name, put something inside, and Python remembers it.</p>
+    <pre><code>name = "Anu"
+age = 32
+is_learning = True</code></pre>
+    <p>Python has a few core data types you'll use constantly:</p>
+    <ul>
+      <li><code>str</code> — text, always in quotes: <code>"hello"</code></li>
+      <li><code>int</code> — whole numbers: <code>42</code></li>
+      <li><code>float</code> — decimal numbers: <code>3.14</code></li>
+      <li><code>bool</code> — <code>True</code> or <code>False</code></li>
+      <li><code>list</code> — an ordered collection: <code>[1, 2, 3]</code></li>
+      <li><code>dict</code> — key-value pairs: <code>{"name": "Anu", "role": "engineer"}</code></li>
+    </ul>
+    <p>You can check any variable's type with <code>type(variable_name)</code>. Get comfortable doing this — it's the fastest way to debug "why isn't this working" confusion.</p>
+  `,
+  practice:[
+    {q:'Create a variable `city` with your city name, and print its type.', hint:'Use type(city) inside print().', answer:`city = "Bangalore"
+print(type(city))   # <class 'str'>`},
+    {q:'Create a list `skills` with 3 of your skills, then print the second item.', hint:'Lists are indexed starting at 0.', answer:`skills = ["troubleshooting", "RCA", "Python"]
+print(skills[1])   # RCA`},
+    {q:'Create a dict `profile` with keys "name" and "years_exp", then print just the years.', hint:'Access dict values with profile["key"].', answer:`profile = {"name": "Anu", "years_exp": 10}
+print(profile["years_exp"])   # 10`}
+  ],
+  quiz:[
+    {q:'What data type would you use to store True/False?', a:'bool'},
+    {q:'How do you check the type of a variable called x?', a:'type(x)'},
+    {q:'What symbol separates a key from its value in a dict?', a:'A colon ( : ), e.g. {"key": "value"}'}
+  ],
+  links:[
+    {label:'Official Python tutorial — data types', url:'https://docs.python.org/3/tutorial/introduction.html'},
+    {label:'Real Python — variables explained', url:'https://realpython.com/python-variables/'}
+  ]
+},
+{
+  group:'PYTHON FOUNDATIONS',
+  id:'functions', title:'Functions',
+  lesson:`
+    <p>A function is a small machine: feed it <b>input</b> (called a parameter), it does a fixed job, and hands you back an <b>output</b> (called the return value). Build once, reuse forever.</p>
+    <pre><code>def greet(name):
+    message = "Hello, " + name
+    return message
+
+result = greet("Anu")
+print(result)   # Hello, Anu</code></pre>
+    <p><code>def</code> defines it. The stuff in parentheses is what it expects as input. <code>return</code> is what it hands back — without it, the function runs but gives you <code>None</code>.</p>
+    <p>Why this matters for you: every troubleshooting step — "check this condition, then do that action" — is a function shape. A function that takes an error code and returns what it means is an automated RCA.</p>
+  `,
+  practice:[
+    {q:'Write `double(n)` that returns a number multiplied by 2.', hint:'One line inside: return n * 2', answer:`def double(n):
+    return n * 2
+
+print(double(5))   # 10`},
+    {q:'Write `is_even(n)` that returns True if a number is even.', hint:'Use the modulo operator %, which gives the remainder.', answer:`def is_even(n):
+    return n % 2 == 0
+
+print(is_even(4))   # True`},
+    {q:'Write `full_name(first, last)` joining two strings with a space.', hint:'Use + to join strings, with " " in between.', answer:`def full_name(first, last):
+    return first + " " + last
+
+print(full_name("Anu", "K"))   # Anu K`}
+  ],
+  quiz:[
+    {q:'What keyword starts a function definition?', a:'def'},
+    {q:'What\'s the difference between a parameter and an argument?', a:'A parameter is the placeholder name in the function definition; an argument is the actual value you pass in when calling it.'},
+    {q:'What does a function return if it has no return statement?', a:'None'}
+  ],
+  links:[
+    {label:'Official Python docs — defining functions', url:'https://docs.python.org/3/tutorial/controlflow.html#defining-functions'},
+    {label:'Real Python — functions guide', url:'https://realpython.com/defining-your-own-python-function/'}
+  ]
+},
+{
+  group:'PYTHON FOUNDATIONS',
+  id:'errors', title:'Error Handling',
+  lesson:`
+    <p>This is the part that should feel like home — it's the same instinct as production troubleshooting, just written in code.</p>
+    <p>When something goes wrong, Python "throws" an <b>exception</b>. If you don't catch it, your program crashes. <code>try/except</code> lets you catch it and decide what happens instead.</p>
+    <pre><code>try:
+    result = 10 / 0
+except ZeroDivisionError:
+    print("Can't divide by zero")
+</code></pre>
+    <p>You can catch specific error types (better practice) or a general one:</p>
+    <pre><code>try:
+    value = int(user_input)
+except ValueError:
+    print("That wasn't a valid number")
+except Exception as e:
+    print(f"Something else broke: {e}")
+</code></pre>
+    <p>Think of <code>except ValueError</code> as a specific known failure mode (like a known bug pattern), and <code>except Exception</code> as your catch-all — same as escalation triage: known issue vs "needs deeper RCA."</p>
+  `,
+  practice:[
+    {q:'Write code that tries to convert the string "abc" to an int, and prints a friendly message if it fails.', hint:'Use try/except ValueError.', answer:`try:
+    num = int("abc")
+except ValueError:
+    print("That's not a valid number")`},
+    {q:'Write a function `safe_divide(a, b)` that returns the division result, or "Error: divide by zero" if b is 0.', hint:'Use try/except ZeroDivisionError.', answer:`def safe_divide(a, b):
+    try:
+        return a / b
+    except ZeroDivisionError:
+        return "Error: divide by zero"
+
+print(safe_divide(10, 0))`},
+    {q:'Modify the function above to also print what type of error occurred, using `except Exception as e`.', hint:'You can print(e) to see the error message.', answer:`def safe_divide(a, b):
+    try:
+        return a / b
+    except Exception as e:
+        return f"Error: {e}"`}
+  ],
+  quiz:[
+    {q:'What block do you use to "catch" an error so your program doesn\'t crash?', a:'try/except'},
+    {q:'What error type is raised when you divide by zero?', a:'ZeroDivisionError'},
+    {q:'How do you catch any error and see its message?', a:'except Exception as e: then use str(e) or f"{e}"'}
+  ],
+  links:[
+    {label:'Official docs — errors and exceptions', url:'https://docs.python.org/3/tutorial/errors.html'},
+    {label:'Real Python — exception handling', url:'https://realpython.com/python-exceptions/'}
+  ]
+},
+{
+  group:'PYTHON FOUNDATIONS',
+  id:'fileio', title:'File I/O',
+  lesson:`
+    <p>File I/O means reading from and writing to files — logs, configs, data exports. You'll use this constantly once you start building real tools.</p>
+    <pre><code># Writing to a file
+with open("notes.txt", "w") as f:
+    f.write("First line\\n")
+    f.write("Second line\\n")
+
+# Reading a file
+with open("notes.txt", "r") as f:
+    content = f.read()
+    print(content)</code></pre>
+    <p><code>with open(...) as f</code> is the standard pattern — it automatically closes the file when you're done, even if something errors out. Always use this pattern rather than opening files manually.</p>
+    <p><code>"w"</code> mode overwrites the file. <code>"a"</code> mode appends to the end without erasing existing content. <code>"r"</code> mode reads.</p>
+  `,
+  practice:[
+    {q:'Write code that creates a file "log.txt" and writes "Task started" to it.', hint:'Use mode "w".', answer:`with open("log.txt", "w") as f:
+    f.write("Task started\\n")`},
+    {q:'Write code that appends "Task completed" to that same file without erasing the first line.', hint:'Use mode "a" for append.', answer:`with open("log.txt", "a") as f:
+    f.write("Task completed\\n")`},
+    {q:'Write code that reads log.txt and prints each line separately.', hint:'Use f.readlines() or loop over f directly.', answer:`with open("log.txt", "r") as f:
+    for line in f:
+        print(line.strip())`}
+  ],
+  quiz:[
+    {q:'What does mode "a" do differently from mode "w"?', a:'"a" appends to the end of the file; "w" overwrites the whole file'},
+    {q:'Why use `with open(...) as f` instead of open() directly?', a:'It automatically closes the file, even if an error happens'},
+    {q:'What mode do you use to just read a file?', a:'"r"'}
+  ],
+  links:[
+    {label:'Official docs — reading and writing files', url:'https://docs.python.org/3/tutorial/inputoutput.html#reading-and-writing-files'},
+    {label:'Real Python — file I/O guide', url:'https://realpython.com/read-write-files-python/'}
+  ]
+},
+{
+  group:'PYTHON FOUNDATIONS',
+  id:'apis', title:'APIs & JSON',
+  lesson:`
+    <p>An <b>API</b> is how one program asks another program for data — this is how your future AI projects will talk to models, databases, and services.</p>
+    <p><b>JSON</b> is just a text format for structured data, and it looks almost exactly like a Python dict:</p>
+    <pre><code>{
+  "name": "Anu",
+  "role": "engineer",
+  "skills": ["Python", "RCA"]
+}</code></pre>
+    <p>To call an API from Python, you use the <code>requests</code> library:</p>
+    <pre><code>import requests
+
+response = requests.get("https://api.example.com/data")
+data = response.json()   # turns JSON into a Python dict
+print(data["name"])</code></pre>
+    <p><code>response.status_code</code> tells you if it worked — <code>200</code> means success, <code>404</code> means not found, <code>500</code> means the server broke. This will feel familiar: it's the same triage instinct as reading an error log.</p>
+  `,
+  practice:[
+    {q:'Write code to GET data from "https://api.github.com" and print the status code.', hint:'Use requests.get(url).status_code', answer:`import requests
+
+response = requests.get("https://api.github.com")
+print(response.status_code)`},
+    {q:'From that same response, convert it to JSON and print just one key from it (e.g. "current_user_url").', hint:'Use response.json() then bracket access.', answer:`import requests
+
+response = requests.get("https://api.github.com")
+data = response.json()
+print(data["current_user_url"])`},
+    {q:'Write a dict representing a support ticket (id, issue, status), then print it as JSON text using the json module.', hint:'Use json.dumps(your_dict)', answer:`import json
+
+ticket = {"id": 101, "issue": "login failure", "status": "open"}
+print(json.dumps(ticket, indent=2))`}
+  ],
+  quiz:[
+    {q:'What Python library is most commonly used to call APIs?', a:'requests'},
+    {q:'What does status_code 200 mean?', a:'The request succeeded'},
+    {q:'How do you turn an API response into a Python dict?', a:'response.json()'}
+  ],
+  links:[
+    {label:'Requests library — quickstart', url:'https://requests.readthedocs.io/en/latest/user/quickstart/'},
+    {label:'Real Python — working with JSON', url:'https://realpython.com/python-json/'}
+  ]
+},
+{
+  group:'AI FUNDAMENTALS',
+  id:'llm', title:'LLM Basics',
+  lesson:`
+    <p>An <b>LLM</b> (Large Language Model) is a model trained on huge amounts of text to predict what word comes next, given everything before it. That's the entire mechanism underneath ChatGPT, Claude, and every "AI chat" product.</p>
+    <p>Key vocabulary you need cold:</p>
+    <ul>
+      <li><b>Token</b> — a chunk of text (roughly ¾ of a word). Models process text as tokens, not full words.</li>
+      <li><b>Prompt</b> — the input text you give the model.</li>
+      <li><b>Context window</b> — the maximum amount of text (in tokens) a model can "see" at once, including your prompt and its own output.</li>
+      <li><b>Temperature</b> — a setting controlling randomness. Low = predictable, focused. High = more creative, less consistent.</li>
+      <li><b>Hallucination</b> — when a model confidently states something false, because it's predicting plausible text, not looking up facts.</li>
+    </ul>
+    <p>The critical mental model: an LLM doesn't "know" things the way a database does. It generates the statistically likely next token. That's exactly why RAG (next module) exists — to ground it in real data.</p>
+  `,
+  practice:[
+    {q:'In your own words, explain to a non-technical colleague what a "hallucination" is.', hint:'Focus on: the model is guessing plausible text, not checking facts.'},
+    {q:'Look at any AI chat tool\'s settings — find where "temperature" or a similar creativity control might live (some tools hide this in developer/API settings).', hint:'Not all consumer apps expose it — that\'s a valid finding too.'},
+    {q:'Write down 3 tasks at Dell where an LLM could plausibly help, and 1 where it clearly should not (due to hallucination risk).', hint:'Think about tasks needing precise facts vs. tasks needing drafting/summarizing.'}
+  ],
+  quiz:[
+    {q:'What does an LLM actually predict, token by token?', a:'The next most statistically likely token, given everything before it'},
+    {q:'What is a "context window"?', a:'The max amount of text (tokens) a model can process at once, input + output combined'},
+    {q:'Why do LLMs hallucinate?', a:'Because they generate plausible-sounding text based on patterns, not by looking up verified facts'}
+  ],
+  links:[
+    {label:'Anthropic — intro to large language models', url:'https://www.anthropic.com/research'},
+    {label:'Illustrated guide to how LLMs work (Jay Alammar)', url:'https://jalammar.github.io/illustrated-transformer/'}
+  ]
+},
+{
+  group:'AI FUNDAMENTALS',
+  id:'rag', title:'RAG Fundamentals',
+  lesson:`
+    <p><b>RAG</b> stands for Retrieval-Augmented Generation. In plain terms: instead of relying only on what the model "remembers" from training, you give it real, current documents to read before it answers.</p>
+    <p>The flow looks like this:</p>
+    <ol>
+      <li>User asks a question.</li>
+      <li>Your system searches a document store (company docs, past tickets, wikis) for the most relevant chunks.</li>
+      <li>Those chunks get inserted into the prompt, alongside the question.</li>
+      <li>The model answers <i>using that retrieved content</i>, instead of guessing from training data.</li>
+    </ol>
+    <p>This is exactly the fix for your team's "tribal knowledge in people's heads" problem: if 20 years of RCAs were turned into a searchable document store, a RAG system could answer "why did this error happen" using the team's actual accumulated knowledge — this is very close to the portfolio project you're planning to build.</p>
+    <p>Key term: <b>embedding</b> — a way of converting text into numbers so a computer can measure how "similar" two pieces of text are, which is how the retrieval step finds relevant chunks.</p>
+  `,
+  practice:[
+    {q:'In your own words, explain why RAG reduces hallucination compared to a plain LLM.', hint:'The model answers from real retrieved text, not just memory.'},
+    {q:'List 3 real data sources at Dell that could become a RAG knowledge base for your team\'s escalations.', hint:'Think tickets, internal wikis, past RCA emails.'},
+    {q:'Sketch (on paper or in words) the 4-step RAG flow using your own troubleshooting process as the example.', hint:'Map: question → search past tickets → retrieve similar case → answer using it.'}
+  ],
+  quiz:[
+    {q:'What does RAG stand for?', a:'Retrieval-Augmented Generation'},
+    {q:'What problem does RAG solve?', a:'It grounds the model\'s answers in real, retrieved documents instead of relying purely on training memory, reducing hallucination'},
+    {q:'What is an embedding used for in RAG?', a:'Converting text into numbers so the system can measure similarity and retrieve relevant chunks'}
+  ],
+  links:[
+    {label:'LangChain — RAG concepts', url:'https://python.langchain.com/docs/concepts/rag/'},
+    {label:'Pinecone — what is RAG (plain-language guide)', url:'https://www.pinecone.io/learn/retrieval-augmented-generation/'}
+  ]
+},
+{
+  group:'AI FUNDAMENTALS',
+  id:'llmops', title:'LLMOps Fundamentals',
+  lesson:`
+    <p><b>LLMOps</b> is keeping AI systems reliable in production — this is the module that maps most directly onto your current job, just for AI systems instead of regular software.</p>
+    <p>What you're responsible for in an LLMOps role:</p>
+    <ul>
+      <li><b>Monitoring</b> — tracking whether the model is responding correctly, how long it takes, and how much it costs per call.</li>
+      <li><b>Evaluation</b> — systematically testing model outputs against known-good answers, so you catch quality drops before users do.</li>
+      <li><b>Prompt versioning</b> — treating prompts like code: tracked, tested, and rolled back if a change makes things worse.</li>
+      <li><b>Guardrails</b> — checks that catch bad outputs (harmful, off-topic, hallucinated) before they reach a user.</li>
+      <li><b>Cost/latency tradeoffs</b> — bigger models are smarter but slower and pricier; part of the job is picking the right model for each task.</li>
+    </ul>
+    <p>The honest pitch to yourself: this is escalation engineering with a new subject matter. "Why did this response go wrong" replaces "why did this ticket happen" — same diagnostic muscle, new domain.</p>
+  `,
+  practice:[
+    {q:'Write down 3 things you\'d want to monitor if you were responsible for an AI support chatbot in production.', hint:'Think: correctness, cost, speed, tone.'},
+    {q:'Describe what "evaluation" would look like for a RAG-based troubleshooting assistant, using your own domain.', hint:'What would count as a right vs wrong RCA answer?'},
+    {q:'Explain in your own words why prompt versioning matters, using a code-deployment analogy you already know.', hint:'Compare it to deploying a code change without version control.'}
+  ],
+  quiz:[
+    {q:'What is the purpose of guardrails in an LLM system?', a:'To catch bad, harmful, or hallucinated outputs before they reach a user'},
+    {q:'Why treat prompts like code (versioning)?', a:'So changes are tracked, tested, and can be rolled back if quality drops'},
+    {q:'Name one tradeoff you manage when choosing which model to use.', a:'Cost/latency vs. quality — bigger models are smarter but slower and more expensive'}
+  ],
+  links:[
+    {label:'MLflow — LLMOps overview', url:'https://mlflow.org/docs/latest/llms/index.html'},
+    {label:'Weights & Biases — what is LLMOps', url:'https://wandb.ai/site/articles/llmops-what-it-is-and-why-it-matters'}
+  ]
+},
+{
+  group:'DEVELOPER CORE',
+  id:'git', title:'Git & Version Control',
+  lesson:`
+    <p><b>Git</b> tracks every change to your code, lets you undo mistakes, and lets multiple people work on the same codebase without overwriting each other. Every development team uses it. Not knowing Git is an instant recruiter red flag; knowing it well is table stakes.</p>
+    <p>The core loop you will use daily:</p>
+    <pre><code>git init                  # start tracking a folder
+git add file.py           # stage a change
+git commit -m "message"   # save a snapshot
+git status                # what changed?
+git log                   # history of snapshots</code></pre>
+    <p>Working with GitHub (the website that hosts Git repositories):</p>
+    <pre><code>git clone URL             # copy a repo to your machine
+git push                  # send your commits to GitHub
+git pull                  # fetch latest changes from GitHub</code></pre>
+    <p><b>Branches</b> are parallel versions of the code. You build a feature on a branch, then merge it back when it works:</p>
+    <pre><code>git checkout -b my-feature   # create + switch to a branch
+git merge my-feature         # bring it back into main</code></pre>
+    <p>Your portfolio projects must live on GitHub with a clean commit history — recruiters and interviewers actually look at this.</p>
+  `,
+  practice:[
+    {q:'Install Git, create a folder, run git init, create a file, and make your first commit.', hint:'Sequence: git init, git add ., git commit -m "first commit"', answer:`git init
+echo "hello" > notes.txt
+git add notes.txt
+git commit -m "first commit"`},
+    {q:'Create a GitHub account (if you do not have one), create a repo, and push your local folder to it.', hint:'GitHub shows you the exact push commands when you create an empty repo.', answer:`git remote add origin https://github.com/YOURNAME/repo.git
+git branch -M main
+git push -u origin main`},
+    {q:'Create a branch called practice, make a change on it, switch back to main, and observe the change is not there.', hint:'git checkout -b practice, edit, commit, then git checkout main', answer:`git checkout -b practice
+echo "new line" >> notes.txt
+git add . && git commit -m "change on branch"
+git checkout main
+cat notes.txt   # change is not here`}
+  ],
+  quiz:[
+    {q:'What is the difference between git add and git commit?', a:'git add stages changes (marks them to be saved); git commit actually saves the snapshot with a message'},
+    {q:'What does git clone do?', a:'Copies a full repository from GitHub (or another remote) to your machine'},
+    {q:'Why use branches?', a:'To build features in isolation without breaking the main working code, then merge when ready'}
+  ],
+  links:[
+    {label:'GitHub official — Git handbook', url:'https://docs.github.com/en/get-started/using-git/about-git'},
+    {label:'Learn Git Branching (interactive game)', url:'https://learngitbranching.js.org/'}
+  ]
+},
+{
+  group:'DEVELOPER CORE',
+  id:'oop', title:'Object-Oriented Programming',
+  lesson:`
+    <p><b>OOP</b> is how real codebases are organized. Instead of loose functions everywhere, related data and behavior are bundled into <b>classes</b>. Interviewers at product companies will expect you to read and write class-based code comfortably.</p>
+    <p>A <b>class</b> is a blueprint; an <b>object</b> is a thing built from that blueprint:</p>
+    <pre><code>class Ticket:
+    def __init__(self, ticket_id, issue):
+        self.ticket_id = ticket_id
+        self.issue = issue
+        self.status = "open"
+
+    def close(self):
+        self.status = "closed"
+
+t = Ticket(101, "login failure")   # create an object
+t.close()
+print(t.status)   # closed</code></pre>
+    <ul>
+      <li><code>__init__</code> — runs when the object is created; sets up its data</li>
+      <li><code>self</code> — refers to this specific object (ticket 101, not tickets in general)</li>
+      <li><b>Method</b> — a function that lives inside a class (like <code>close</code>)</li>
+    </ul>
+    <p><b>Inheritance</b> lets one class build on another — a <code>UrgentTicket</code> can inherit everything from <code>Ticket</code> and add its own behavior. You will see this constantly when reading real codebases.</p>
+  `,
+  practice:[
+    {q:'Write a class Server with attributes name and status (default "up"), and a method go_down() that sets status to "down".', hint:'Follow the Ticket example shape exactly.', answer:`class Server:
+    def __init__(self, name):
+        self.name = name
+        self.status = "up"
+
+    def go_down(self):
+        self.status = "down"
+
+s = Server("prod-db-01")
+s.go_down()
+print(s.status)   # down`},
+    {q:'Add a method restart() to Server that sets status back to "up" and prints a message.', hint:'Methods can do multiple things: change state and print.', answer:`    def restart(self):
+        self.status = "up"
+        print(self.name + " restarted")`},
+    {q:'Create a class CriticalServer that inherits from Server and adds an attribute escalation_contact.', hint:'class CriticalServer(Server): then call super().__init__(name) inside __init__.', answer:`class CriticalServer(Server):
+    def __init__(self, name, escalation_contact):
+        super().__init__(name)
+        self.escalation_contact = escalation_contact`}
+  ],
+  quiz:[
+    {q:'What is the difference between a class and an object?', a:'A class is the blueprint; an object is a specific instance created from it'},
+    {q:'What does self refer to inside a class?', a:'The specific object the method is being called on'},
+    {q:'What does inheritance let you do?', a:'Build a new class on top of an existing one, reusing its data and methods while adding or changing behavior'}
+  ],
+  links:[
+    {label:'Real Python — OOP in Python', url:'https://realpython.com/python3-object-oriented-programming/'},
+    {label:'Official Python docs — classes', url:'https://docs.python.org/3/tutorial/classes.html'}
+  ]
+},
+{
+  group:'DEVELOPER CORE',
+  id:'dsa', title:'Data Structures Essentials',
+  lesson:`
+    <p>Interviews test whether you can pick the right structure for the job. You do not need competitive-programming depth for AI engineering roles, but you must be fluent in these four and their tradeoffs:</p>
+    <ul>
+      <li><b>List</b> — ordered, allows duplicates. Fast to loop over. Slow to search (must check each item).</li>
+      <li><b>Dict</b> — key to value lookup. Near-instant search by key. This is the answer to most "make it faster" interview follow-ups.</li>
+      <li><b>Set</b> — unordered, no duplicates. Near-instant membership check: <code>x in my_set</code>.</li>
+      <li><b>Tuple</b> — like a list, but unchangeable. Used for fixed groups like coordinates or (status, code) pairs.</li>
+    </ul>
+    <p>The one concept interviewers care about: <b>time complexity</b> — how work grows with input size. Rough shorthand:</p>
+    <ul>
+      <li>Searching a list of n items: up to n checks — written O(n)</li>
+      <li>Looking up a dict key: about 1 step regardless of size — written O(1)</li>
+    </ul>
+    <p>So "I looped through a list inside another loop" is O(n\u00B2) — fine for 100 items, disaster for a million. Converting an inner list-search to a dict or set lookup is the single most common optimization asked in interviews.</p>
+  `,
+  practice:[
+    {q:'Given a list of 10 error codes with duplicates, produce a list of unique codes.', hint:'Convert to a set, then back to a list.', answer:`codes = [500, 404, 500, 403, 404, 500, 200, 301, 403, 500]
+unique = list(set(codes))
+print(unique)`},
+    {q:'Count how many times each error code appears, using a dict.', hint:'Loop through, use the code as key, increment the value.', answer:`counts = {}
+for c in codes:
+    counts[c] = counts.get(c, 0) + 1
+print(counts)   # {500: 4, 404: 2, ...}`},
+    {q:'You have a list of 1 million user IDs and need to check if a specific ID exists, thousands of times. What structure should the IDs be in, and why?', hint:'Think O(n) vs O(1) membership check.', answer:`# A set. Checking "x in my_set" is O(1),
+# while "x in my_list" is O(n) — scanning
+# a million items every single check.
+id_set = set(user_ids)
+if 12345 in id_set: ...`}
+  ],
+  quiz:[
+    {q:'Which structure gives near-instant lookup by key?', a:'Dict'},
+    {q:'What does O(n) mean in plain words?', a:'The work grows in direct proportion to the input size — twice the items, twice the work'},
+    {q:'What is the classic fix for a slow search inside a loop?', a:'Replace the list search with a dict or set lookup (O(n) becomes O(1))'}
+  ],
+  links:[
+    {label:'Real Python — common data structures', url:'https://realpython.com/python-data-structures/'},
+    {label:'NeetCode — practice problems (start with Easy)', url:'https://neetcode.io/practice'}
+  ]
+},
+{
+  group:'DEVELOPER CORE',
+  id:'testing', title:'Testing Basics',
+  lesson:`
+    <p>Developers prove their code works with <b>automated tests</b> — small programs that run your functions with known inputs and check the outputs. This is different from QA testing a product; this is a developer writing safety nets for their own code, and product companies expect it.</p>
+    <p>The standard Python tool is <b>pytest</b>. A test is just a function whose name starts with <code>test_</code>, using <code>assert</code> to check expectations:</p>
+    <pre><code># file: calc.py
+def double(n):
+    return n * 2
+
+# file: test_calc.py
+from calc import double
+
+def test_double_positive():
+    assert double(5) == 10
+
+def test_double_zero():
+    assert double(0) == 0</code></pre>
+    <p>Run all tests with one command: <code>pytest</code>. Green means safe; red shows you exactly which expectation broke.</p>
+    <p>Why recruiters care: tests in your GitHub projects signal you write production-grade code, not scripts. Even 5 tests per project changes how your portfolio reads.</p>
+  `,
+  practice:[
+    {q:'Install pytest (pip install pytest) and write a test for the is_even function from the Functions lesson.', hint:'Test both an even and an odd number.', answer:`from mycode import is_even
+
+def test_even():
+    assert is_even(4) == True
+
+def test_odd():
+    assert is_even(7) == False`},
+    {q:'Write a test that checks safe_divide(10, 0) returns the error message instead of crashing.', hint:'assert the returned string.', answer:`def test_divide_by_zero():
+    assert safe_divide(10, 0) == "Error: divide by zero"`},
+    {q:'Break your function on purpose (change * 2 to * 3) and run pytest to see a failure report. Then fix it.', hint:'Reading failure output is the skill being practiced here.'}
+  ],
+  quiz:[
+    {q:'What naming convention makes pytest discover a test function?', a:'The function name starts with test_'},
+    {q:'What does assert do?', a:'Checks a condition; if false, the test fails and pytest reports it'},
+    {q:'Why include tests in portfolio projects?', a:'They signal production-grade engineering habits — a key differentiator recruiters and interviewers look for'}
+  ],
+  links:[
+    {label:'pytest official — getting started', url:'https://docs.pytest.org/en/stable/getting-started.html'},
+    {label:'Real Python — pytest guide', url:'https://realpython.com/pytest-python-testing/'}
+  ]
+},
+{
+  group:'DEVELOPER CORE',
+  id:'sql', title:'SQL Essentials',
+  lesson:`
+    <p><b>SQL</b> is the language for talking to databases. Nearly every application stores data in one, and AI systems are no exception — your RAG project will store documents and metadata somewhere queryable. Interviewers routinely include one SQL question even for AI roles.</p>
+    <p>The four queries that cover 90% of real usage:</p>
+    <pre><code>-- Read rows
+SELECT name, status FROM tickets WHERE status = 'open';
+
+-- Add a row
+INSERT INTO tickets (name, status) VALUES ('login bug', 'open');
+
+-- Change rows
+UPDATE tickets SET status = 'closed' WHERE id = 101;
+
+-- Remove rows
+DELETE FROM tickets WHERE status = 'closed';</code></pre>
+    <p>Two more that interviews love:</p>
+    <pre><code>-- Count / group
+SELECT status, COUNT(*) FROM tickets GROUP BY status;
+
+-- Combine two tables
+SELECT t.name, u.email
+FROM tickets t
+JOIN users u ON t.user_id = u.id;</code></pre>
+    <p><b>JOIN</b> is the one to internalize: it stitches rows from two tables together using a shared key — like matching a ticket to the user who raised it.</p>
+  `,
+  practice:[
+    {q:'Using sqlite3 (built into Python), create a table tickets and insert 3 rows.', hint:'import sqlite3; conn = sqlite3.connect("test.db")', answer:`import sqlite3
+conn = sqlite3.connect("test.db")
+c = conn.cursor()
+c.execute("CREATE TABLE tickets (id INTEGER, issue TEXT, status TEXT)")
+c.execute("INSERT INTO tickets VALUES (1, 'login bug', 'open')")
+c.execute("INSERT INTO tickets VALUES (2, 'slow page', 'open')")
+c.execute("INSERT INTO tickets VALUES (3, 'crash', 'closed')")
+conn.commit()`},
+    {q:'Write a query returning only open tickets.', hint:'SELECT with a WHERE clause.', answer:`c.execute("SELECT * FROM tickets WHERE status = 'open'")
+print(c.fetchall())`},
+    {q:'Write a query counting tickets per status.', hint:'GROUP BY status with COUNT(*).', answer:`c.execute("SELECT status, COUNT(*) FROM tickets GROUP BY status")
+print(c.fetchall())   # [('open', 2), ('closed', 1)]`}
+  ],
+  quiz:[
+    {q:'Which SQL keyword filters rows?', a:'WHERE'},
+    {q:'What does JOIN do?', a:'Combines rows from two tables using a shared key column'},
+    {q:'What does GROUP BY enable?', a:'Aggregating rows into groups so you can count, sum, or average per group'}
+  ],
+  links:[
+    {label:'SQLBolt — interactive SQL lessons', url:'https://sqlbolt.com/'},
+    {label:'SQLite official docs', url:'https://www.sqlite.org/docs.html'}
+  ]
+},
+{
+  group:'DEVELOPER CORE',
+  id:'docker', title:'Docker & Deployment Basics',
+  lesson:`
+    <p><b>Docker</b> packages your application plus everything it needs (Python version, libraries, configs) into a portable box called a <b>container</b>, so it runs identically on your laptop, a colleague's machine, or a cloud server. "It works on my machine" stops being a problem.</p>
+    <p>Key vocabulary:</p>
+    <ul>
+      <li><b>Image</b> — the frozen recipe (your app + its environment)</li>
+      <li><b>Container</b> — a running instance of an image</li>
+      <li><b>Dockerfile</b> — the text file describing how to build the image</li>
+    </ul>
+    <p>A minimal Dockerfile for a Python app:</p>
+    <pre><code>FROM python:3.11
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+CMD ["python", "app.py"]</code></pre>
+    <p>Build and run:</p>
+    <pre><code>docker build -t my-app .
+docker run my-app</code></pre>
+    <p>Why this matters for you: "deployed" is what separates a script from a project. A portfolio project running in Docker — or better, live on a free host like Render or Hugging Face Spaces — is proof you can ship, not just write. LLMOps roles treat Docker fluency as assumed knowledge.</p>
+  `,
+  practice:[
+    {q:'Install Docker Desktop and run the hello-world container to verify setup.', hint:'docker run hello-world', answer:`docker run hello-world
+# prints a confirmation message if Docker is working`},
+    {q:'Write a Dockerfile for a one-file Python script that prints "container works", build it, run it.', hint:'Use the minimal Dockerfile above; CMD points at your script.', answer:`# app.py: print("container works")
+# Dockerfile:
+FROM python:3.11
+WORKDIR /app
+COPY app.py .
+CMD ["python", "app.py"]
+
+# terminal:
+docker build -t hello-py .
+docker run hello-py`},
+    {q:'Deploy any small app (even a to-do API) to a free host — Render, Railway, or Hugging Face Spaces — and get a public URL.', hint:'Hugging Face Spaces is the easiest for AI-flavored demos and looks great on a portfolio.'}
+  ],
+  quiz:[
+    {q:'What is the difference between an image and a container?', a:'An image is the frozen recipe; a container is a running instance of it'},
+    {q:'What file defines how a Docker image is built?', a:'The Dockerfile'},
+    {q:'Why does Docker matter for your portfolio?', a:'A containerized or live-deployed project proves you can ship production-style software, not just write scripts'}
+  ],
+  links:[
+    {label:'Docker official — get started', url:'https://docs.docker.com/get-started/'},
+    {label:'Hugging Face Spaces — free hosting for demos', url:'https://huggingface.co/docs/hub/spaces'}
+  ]
+},
+{
+  group:'INTERVIEW DSA',
+  id:'dsa-arrays', title:'Arrays & Hashing Patterns',
+  lesson:`
+    <p>DSA interviews are not about knowing exotic algorithms — 70% of screening questions are solved by a handful of repeating <b>patterns</b>. This section teaches you the patterns, not competitive programming. You already know the building blocks (lists, dicts, sets); now you learn when to reach for each.</p>
+    <p><b>Pattern 1 — "Have I seen this before?" \u2192 use a set.</b></p>
+    <p>Problem: does a list contain any duplicates?</p>
+    <pre><code>def has_duplicate(nums):
+    seen = set()
+    for n in nums:
+        if n in seen:
+            return True
+        seen.add(n)
+    return False</code></pre>
+    <p>Loop once, remember what you have seen, check membership in O(1). This exact shape solves an entire family of problems.</p>
+    <p><b>Pattern 2 — "Count things" \u2192 use a dict.</b> You already know this one — it is the counter pattern from Data Structures Essentials. Problems like "are these two words anagrams?" are just counting letters in both and comparing the two dicts.</p>
+    <p><b>Pattern 3 — "Find a pair that adds to X" \u2192 dict of what you still need.</b></p>
+    <p>The most famous interview question in existence (Two Sum): find two numbers that add up to a target.</p>
+    <pre><code>def two_sum(nums, target):
+    needed = {}   # value we need -> index of who needs it
+    for i, n in enumerate(nums):
+        if n in needed:
+            return [needed[n], i]
+        needed[target - n] = i</code></pre>
+    <p>Walk through it with nums=[2,7,11], target=9: at 2, you note "I need a 7" — at 7, someone needed you — done. One pass, no nested loops.</p>
+    <p><b>The meta-skill:</b> when you see a problem, ask "is this a seen-before problem, a counting problem, or a what-do-I-still-need problem?" That question alone solves most easy-level interview questions.</p>
+  `,
+  practice:[
+    {q:'NeetCode: solve "Contains Duplicate" (Easy) yourself before peeking — it is Pattern 1 verbatim.', hint:'Set, one pass.', answer:`def containsDuplicate(nums):
+    seen = set()
+    for n in nums:
+        if n in seen:
+            return True
+        seen.add(n)
+    return False`},
+    {q:'NeetCode: solve "Valid Anagram" (Easy) — it is Pattern 2.', hint:'Count letters of both strings into two dicts, compare.', answer:`def isAnagram(s, t):
+    if len(s) != len(t):
+        return False
+    count_s, count_t = {}, {}
+    for i in range(len(s)):
+        count_s[s[i]] = count_s.get(s[i], 0) + 1
+        count_t[t[i]] = count_t.get(t[i], 0) + 1
+    return count_s == count_t`},
+    {q:'NeetCode: solve "Two Sum" (Easy) — Pattern 3. Trace it by hand on paper first with a small example.', hint:'Dict mapping needed-value to index.', answer:`def twoSum(nums, target):
+    needed = {}
+    for i, n in enumerate(nums):
+        if n in needed:
+            return [needed[n], i]
+        needed[target - n] = i`}
+  ],
+  quiz:[
+    {q:'Which structure answers "have I seen this before?" in O(1)?', a:'A set'},
+    {q:'Why is the dict approach to Two Sum better than checking every pair with nested loops?', a:'Nested loops are O(n\u00B2); the dict approach is one pass, O(n)'},
+    {q:'What question should you ask yourself first when seeing a new array problem?', a:'Is this a seen-before problem, a counting problem, or a what-do-I-still-need problem?'}
+  ],
+  links:[
+    {label:'NeetCode — Arrays & Hashing section (do Easy ones)', url:'https://neetcode.io/practice'},
+    {label:'NeetCode YouTube — Two Sum walkthrough', url:'https://www.youtube.com/watch?v=KLlXCFG5TnA'}
+  ]
+},
+{
+  group:'INTERVIEW DSA',
+  id:'dsa-pointers', title:'Two Pointers & Sliding Window',
+  lesson:`
+    <p>Second family of patterns, for problems about <b>contiguous stretches or pairs in ordered data</b>.</p>
+    <p><b>Pattern 4 — Two pointers: one at each end, walk inward.</b></p>
+    <p>Problem: is a string a palindrome (reads the same both ways)?</p>
+    <pre><code>def is_palindrome(s):
+    left, right = 0, len(s) - 1
+    while left < right:
+        if s[left] != s[right]:
+            return False
+        left += 1
+        right -= 1
+    return True</code></pre>
+    <p>Two index variables converging. No extra memory, one pass. Used whenever comparing or pairing items from both ends of something ordered.</p>
+    <p><b>Pattern 5 — Sliding window: a moving stretch over the data.</b></p>
+    <p>Problem: best day to buy and sell a stock (max profit from one buy then one sell later).</p>
+    <pre><code>def max_profit(prices):
+    cheapest = prices[0]
+    best = 0
+    for price in prices[1:]:
+        if price < cheapest:
+            cheapest = price          # better buy day found
+        else:
+            best = max(best, price - cheapest)
+    return best</code></pre>
+    <p>You track a window between "cheapest so far" and "today," sliding forward, remembering the best result. Notice this is your old friend the accumulator — <code>best</code> accumulates the answer as the window moves.</p>
+    <p><b>When to reach for these:</b> the problem mentions a sorted array, a substring, a subarray, "consecutive," or buy-low-sell-high shapes. If the data has an order that matters, think pointers or window before anything else.</p>
+  `,
+  practice:[
+    {q:'NeetCode: solve "Valid Palindrome" (Easy) — Pattern 4, with a twist: skip non-alphanumeric characters.', hint:'Same converging pointers; add a check to skip punctuation using .isalnum().', answer:`def isPalindrome(s):
+    left, right = 0, len(s) - 1
+    while left < right:
+        while left < right and not s[left].isalnum():
+            left += 1
+        while left < right and not s[right].isalnum():
+            right -= 1
+        if s[left].lower() != s[right].lower():
+            return False
+        left += 1
+        right -= 1
+    return True`},
+    {q:'NeetCode: solve "Best Time to Buy and Sell Stock" (Easy) — Pattern 5 verbatim.', hint:'Track cheapest so far and best profit so far.', answer:`def maxProfit(prices):
+    cheapest = prices[0]
+    best = 0
+    for price in prices[1:]:
+        if price < cheapest:
+            cheapest = price
+        else:
+            best = max(best, price - cheapest)
+    return best`},
+    {q:'On paper, no code: for the list [7,1,5,3,6,4], trace max_profit by hand — write cheapest and best after each step.', hint:'cheapest: 7,1,1,1,1,1 — best: 0,0,4,4,5,5', answer:`price=7: cheapest=7, best=0
+price=1: cheapest=1, best=0
+price=5: cheapest=1, best=4
+price=3: cheapest=1, best=4
+price=6: cheapest=1, best=5
+price=4: cheapest=1, best=5
+Answer: 5 (buy at 1, sell at 6)`}
+  ],
+  quiz:[
+    {q:'What signals in a problem suggest two pointers?', a:'Sorted/ordered data, comparing from both ends, pairs in an ordered array'},
+    {q:'What signals suggest a sliding window?', a:'Substring, subarray, consecutive elements, best stretch over ordered data'},
+    {q:'In max_profit, what pattern is the best variable an example of?', a:'An accumulator — it accumulates the best answer seen so far as the loop advances'}
+  ],
+  links:[
+    {label:'NeetCode — Two Pointers section', url:'https://neetcode.io/practice'},
+    {label:'NeetCode YouTube — Buy and Sell Stock walkthrough', url:'https://www.youtube.com/watch?v=1pkOgXD63yU'}
+  ]
+},
+{
+  group:'INTERVIEW DSA',
+  id:'dsa-stack', title:'Stacks & Queues',
+  lesson:`
+    <p><b>Pattern 6 — Stack: last in, first out.</b> Like a stack of plates — you can only take the top one. In Python, a plain list works: <code>append()</code> to push on top, <code>pop()</code> to take the top off.</p>
+    <p>The classic use: <b>matching things that open and close</b>. Problem: is a string of brackets valid — every opener closed in the right order?</p>
+    <pre><code>def is_valid(s):
+    stack = []
+    pairs = {')': '(', ']': '[', '}': '{'}
+    for ch in s:
+        if ch in '([{':
+            stack.append(ch)          # opener: remember it
+        else:
+            if not stack or stack.pop() != pairs[ch]:
+                return False          # closer with no matching opener
+    return len(stack) == 0            # everything got closed</code></pre>
+    <p>Trace "([])": push ( , push [ , then ] pops [ (match), then ) pops ( (match), stack empty \u2192 valid. Trace "(]": push ( , then ] pops ( — mismatch \u2192 invalid.</p>
+    <p><b>Queue: first in, first out</b> — like a line at a counter. Python gives you <code>collections.deque</code> with <code>append()</code> and <code>popleft()</code>. Queues power breadth-first traversal (processing things level by level), which appears in tree and graph questions at the medium level — for screening rounds, knowing what a queue is and when it applies is sufficient.</p>
+    <p><b>When to reach for a stack:</b> the problem involves nesting, matching open/close pairs, undo behavior, or "most recent thing first." Brackets, parsing, browser-back-button shapes.</p>
+  `,
+  practice:[
+    {q:'NeetCode: solve "Valid Parentheses" (Easy) — the exact problem above. Solve without looking first.', hint:'Stack of openers; each closer must match the top.', answer:`def isValid(s):
+    stack = []
+    pairs = {')': '(', ']': '[', '}': '{'}
+    for ch in s:
+        if ch in '([{':
+            stack.append(ch)
+        elif not stack or stack.pop() != pairs[ch]:
+            return False
+    return len(stack) == 0`},
+    {q:'On paper: trace is_valid on the input "{[()]}" step by step, writing the stack contents after each character.', hint:'Stack grows to 3 openers then shrinks to empty.', answer:`{ : stack = ['{']
+[ : stack = ['{','[']
+( : stack = ['{','[','(']
+) : pop ( — match, stack = ['{','[']
+] : pop [ — match, stack = ['{']
+} : pop { — match, stack = []
+Empty at end: valid`},
+    {q:'Using a list as a stack, write a tiny "undo" demo: push 3 actions, then pop them printing each — observe the reverse order.', hint:'append three strings, pop three times.', answer:`actions = []
+actions.append("typed hello")
+actions.append("deleted word")
+actions.append("pasted text")
+while actions:
+    print("undo:", actions.pop())
+# undoes in reverse order: pasted, deleted, typed`}
+  ],
+  quiz:[
+    {q:'Stack vs queue — which order does each release items in?', a:'Stack: last in first out. Queue: first in first out'},
+    {q:'What problem shapes suggest a stack?', a:'Nesting, matching open/close pairs, undo, most-recent-first behavior'},
+    {q:'Why must the stack be empty at the end of the bracket check?', a:'A leftover opener means something was opened but never closed — invalid'}
+  ],
+  links:[
+    {label:'NeetCode — Stack section', url:'https://neetcode.io/practice'},
+    {label:'NeetCode YouTube — Valid Parentheses walkthrough', url:'https://www.youtube.com/watch?v=WTzjTskDFMg'}
+  ]
+},
+{
+  group:'INTERVIEW DSA',
+  id:'dsa-binsearch', title:'Binary Search & Interview Strategy',
+  lesson:`
+    <p><b>Pattern 7 — Binary search: cut the problem in half every step.</b></p>
+    <p>Finding a value in a <i>sorted</i> list: check the middle. Too small? The answer lives in the right half. Too big? Left half. Repeat. A million items takes about 20 checks instead of a million — O(log n).</p>
+    <pre><code>def binary_search(nums, target):
+    left, right = 0, len(nums) - 1
+    while left <= right:
+        mid = (left + right) // 2
+        if nums[mid] == target:
+            return mid
+        elif nums[mid] < target:
+            left = mid + 1
+        else:
+            right = mid - 1
+    return -1   # not found</code></pre>
+    <p>You already use this instinct — it is exactly how you narrow down a fault: rule out half the system, then half of what remains. Same idea, formalized.</p>
+    <p><b>The interview strategy that matters more than any pattern:</b></p>
+    <ul>
+      <li><b>Talk before you code.</b> Restate the problem, ask about edge cases (empty input? duplicates?), state your approach and its complexity, THEN write. Silent coding is the number one interview mistake.</li>
+      <li><b>Start with the honest brute force.</b> Saying "the naive way is nested loops, O(n\u00B2) — but a dict gets it to O(n)" scores better than jumping to the clever answer, because it shows reasoning.</li>
+      <li><b>Test out loud at the end.</b> Walk one small example through your code line by line — catching your own bug live is a strong positive signal, not a weakness.</li>
+    </ul>
+    <p><b>Your realistic target:</b> roughly 25-30 Easy problems across these four modules of patterns, then 5-10 Mediums. That is genuinely enough for Applied AI / LLMOps screening rounds — these roles test coding fluency, not competitive algorithms. You do not need trees, graphs, or dynamic programming mastery for this path; if a specific company asks for more, prep that company specifically.</p>
+  `,
+  practice:[
+    {q:'NeetCode: solve "Binary Search" (Easy) from scratch without looking at the lesson.', hint:'left, right, mid — halve every loop.', answer:`def search(nums, target):
+    left, right = 0, len(nums) - 1
+    while left <= right:
+        mid = (left + right) // 2
+        if nums[mid] == target:
+            return mid
+        elif nums[mid] < target:
+            left = mid + 1
+        else:
+            right = mid - 1
+    return -1`},
+    {q:'Do one full mock interview on yourself: pick any solved problem, and re-solve it while speaking your reasoning OUT LOUD, start to finish, including testing with an example.', hint:'Feels silly alone; works. The skill being trained is narrating while thinking.'},
+    {q:'Build your grind list: on NeetCode, bookmark 25 Easy problems across Arrays & Hashing, Two Pointers, Stack, Binary Search. Do 2-3 per study session from now on.', hint:'Consistency beats bingeing — 3 problems daily for 2 weeks beats 20 in one weekend.'}
+  ],
+  quiz:[
+    {q:'What must be true about the data before binary search applies?', a:'It must be sorted'},
+    {q:'What is the number one behavioral mistake in coding interviews?', a:'Coding in silence — you should narrate your reasoning, ask about edge cases, and state complexity before writing'},
+    {q:'Roughly how many problems is a realistic target for Applied AI / LLMOps screening prep?', a:'About 25-30 Easy plus 5-10 Medium, focused on these core patterns'}
+  ],
+  links:[
+    {label:'NeetCode — Binary Search section', url:'https://neetcode.io/practice'},
+    {label:'NeetCode roadmap (follow Easy tier only)', url:'https://neetcode.io/roadmap'}
+  ]
+},
+{
+  group:'ADVANCED PYTHON',
+  id:'generators', title:'Generators & yield',
+  lesson:`
+    <p>A function containing <b>yield</b> becomes a <b>generator</b>. Calling it does not run the code — it creates a paused, ready-to-run generator object that remembers exactly where it left off.</p>
+    <pre><code>def cumulative_average(numbers):
+    total = 0
+    for items, number in enumerate(numbers, 1):
+        total += number
+        yield total / items
+
+values = [5, 3, 8, 2, 5]
+for cum_average in cumulative_average(values):
+    print(round(cum_average, 2))
+# 5.0  4.0  5.33  4.5  4.6</code></pre>
+    <p><b>The data flow, precisely:</b></p>
+    <ul>
+      <li>The function is called ONCE. What happens 5 times is next() — the outer for loop secretly calls it each iteration.</li>
+      <li>Each next() resumes the generator from where it paused, runs until the next yield, hands that value out, and freezes again — with total, the loop position, and enumerate\u2019s internal tracker all preserved.</li>
+      <li>enumerate(numbers, 1) pairs each item with a position counter starting at 1: (1,5), (2,3), (3,8)...</li>
+    </ul>
+    <p><b>yield vs return:</b> return ends the function permanently and gives back one value; local variables are destroyed. yield pauses the function, gives back one value, and keeps all local state alive for the next resume. return = handing over a finished report and closing the office. yield = handing over one page and holding the door open.</p>
+    <p><b>Why generators exist:</b> for huge or streaming data, a normal function must build the entire result in memory before returning. A generator emits one result at a time, holding only what it needs to continue (here, just total). Process one item, emit one result, forget the rest.</p>
+    <p><b>Producer vs consumer:</b> the generator produces values; the for loop only consumes them. The loop has no idea total even exists.</p>
+  `,
+  practice:[
+    {q:'Write a generator countdown(n) that yields n, n-1, ... down to 1.', hint:'while n > 0: yield n; n -= 1', answer:`def countdown(n):
+    while n > 0:
+        yield n
+        n -= 1
+
+for x in countdown(3):
+    print(x)   # 3 2 1`},
+    {q:'Write a generator running_max(numbers) that yields the largest value seen so far after each item.', hint:'Keep a best variable, update with max, yield it each round.', answer:`def running_max(numbers):
+    best = None
+    for n in numbers:
+        if best is None or n > best:
+            best = n
+        yield best
+
+print(list(running_max([3, 1, 5, 2, 8])))
+# [3, 3, 5, 5, 8]`},
+    {q:'On paper: trace cumulative_average([10, 20]) by hand — write total, items, and the yielded value for each round.', hint:'Round 1: total 10, yields 10.0. Round 2: total 30, yields 15.0.', answer:`Round 1: enumerate gives (1, 10)
+  total = 0 + 10 = 10
+  yields 10/1 = 10.0, freezes
+Round 2: enumerate gives (2, 20)
+  total = 10 + 20 = 30
+  yields 30/2 = 15.0, freezes
+List exhausted, generator ends`}
+  ],
+  quiz:[
+    {q:'How many times is a generator function called when its output is looped over 5 times?', a:'Once. The loop calls next() 5 times on the same generator object'},
+    {q:'What survives between yields that does not survive a return?', a:'All local variables and loop positions — the full frozen state of the function'},
+    {q:'When are generators the right tool?', a:'Large or streaming data where you want one result at a time without holding everything in memory'}
+  ],
+  links:[
+    {label:'Real Python — introduction to generators', url:'https://realpython.com/introduction-to-python-generators/'},
+    {label:'Official docs — yield expressions', url:'https://docs.python.org/3/reference/expressions.html#yield-expressions'}
+  ]
+},
+{
+  group:'ADVANCED PYTHON',
+  id:'closures', title:'Closures',
+  lesson:`
+    <p>A <b>closure</b> is when an inner function remembers a variable from the outer function it was created in — even after the outer function has finished running.</p>
+    <pre><code>def generate_power(exponent):
+    def power(base):
+        return base**exponent
+    return power
+
+square = generate_power(2)
+print(square(4))   # 16
+print(square(6))   # 36
+
+cube = generate_power(3)
+print(cube(3))     # 27</code></pre>
+    <p><b>What actually happens:</b> generate_power(2) runs fully and returns the power function itself (as an object, not a result). Normally exponent would be destroyed when the outer function ends — but power still needs it, so Python keeps exponent = 2 alive in a private pocket attached to that specific function. That attached memory is the closure.</p>
+    <p><b>Independence:</b> cube = generate_power(3) is a NEW call, creating a NEW power function with its OWN frozen exponent = 3. square and cube never share or interfere.</p>
+    <p><b>Mental model:</b> generate_power is a factory. Each call builds a fresh function and welds one specific value permanently inside before handing it over. Same blueprint, different welded-in number, different behavior forever.</p>
+    <p><b>Closure vs generator:</b> both are frozen memory across calls. A generator pauses MID-execution and resumes later. A closure has FINISHED executing but keeps specific variables alive purely for the function it returned.</p>
+  `,
+  practice:[
+    {q:'Write make_greeter(greeting) that returns a function taking a name and returning the greeting plus the name.', hint:'Same factory shape as generate_power.', answer:`def make_greeter(greeting):
+    def greet(name):
+        return greeting + ", " + name
+    return greet
+
+hello = make_greeter("Hello")
+namaste = make_greeter("Namaste")
+print(hello("Anu"))     # Hello, Anu
+print(namaste("Anu"))   # Namaste, Anu`},
+    {q:'Write make_counter() that returns a function which returns 1, then 2, then 3 on each call.', hint:'Keep count in the outer function; use nonlocal count in the inner one to modify it.', answer:`def make_counter():
+    count = 0
+    def counter():
+        nonlocal count
+        count += 1
+        return count
+    return counter
+
+c = make_counter()
+print(c(), c(), c())   # 1 2 3`},
+    {q:'Predict without running: a = make_counter(); b = make_counter(); a(); a(); print(b()). What prints and why?', hint:'Each factory call gets its own frozen count.', answer:`Prints 1.
+a and b are separate closures with separate
+count variables. Calling a() twice only
+advances a\u2019s count. b\u2019s count is untouched.`}
+  ],
+  quiz:[
+    {q:'What is a closure in one sentence?', a:'An inner function that keeps access to variables from its outer function even after the outer function has finished'},
+    {q:'Do two functions from the same factory share their remembered variables?', a:'No — each call to the factory creates an independent closure with its own frozen values'},
+    {q:'What keyword lets an inner function MODIFY (not just read) an outer variable?', a:'nonlocal'}
+  ],
+  links:[
+    {label:'Real Python — closures explained', url:'https://realpython.com/python-closure/'},
+    {label:'Official docs — naming and binding', url:'https://docs.python.org/3/reference/executionmodel.html'}
+  ]
+},
+{
+  group:'ADVANCED PYTHON',
+  id:'asyncio', title:'Async & asyncio',
+  lesson:`
+    <p><b>asyncio</b> lets one program juggle many slow, waiting tasks at once — network calls, API requests, file reads. It is the tool when the bottleneck is WAITING, not computation.</p>
+    <pre><code>import asyncio
+
+async def fetch_data(name, delay):
+    print(name, "started")
+    await asyncio.sleep(delay)   # stands in for a slow API call
+    print(name, "finished")
+    return name + " result"
+
+async def main():
+    results = await asyncio.gather(
+        fetch_data("API 1", 2),
+        fetch_data("API 2", 2),
+        fetch_data("API 3", 2)
+    )
+    print(results)
+
+asyncio.run(main())</code></pre>
+    <p><b>Output shape:</b> all three "started" lines print immediately in a burst (each coroutine runs until its first await, then pauses). The "finished" lines arrive ~2 seconds later in UNPREDICTABLE order — all three became ready at nearly the same instant, and the event loop resumes them in whatever order it happens to. Total time: ~2 seconds, not 6, because the waiting overlaps.</p>
+    <p><b>One guarantee:</b> gather always returns results in the order you PASSED the coroutines, regardless of finish order.</p>
+    <p><b>Mapping to what you know:</b></p>
+    <ul>
+      <li>async def function \u2192 like a generator: calling it creates a paused coroutine object, nothing runs</li>
+      <li>await \u2192 like yield: a pause point that freezes local state and hands control back</li>
+      <li>The event loop \u2192 like the for loop calling next(), except it juggles MANY coroutines and resumes whichever is ready</li>
+    </ul>
+    <p><b>The one real difference from generators:</b> a generator resumes only when YOU call next(), so order is fully predictable. Coroutines resume when the event loop decides — finish order is a race. Same spirit as a race condition in production, in miniature.</p>
+    <p><b>Why it matters for AI work:</b> calling an LLM API is exactly this kind of slow waiting operation. A RAG system calling an embedding API, a retrieval store, and an LLM should overlap those waits — a common LLMOps interview topic.</p>
+  `,
+  practice:[
+    {q:'Run the example above locally. Then change the three delays to 1, 2, 3 and predict the finished order before running.', hint:'With different delays the finish order becomes predictable: shortest first.', answer:`API 1 finished (after 1s)
+API 2 finished (after 2s)
+API 3 finished (after 3s)
+Results list is still in passed order:
+["API 1 result", "API 2 result", "API 3 result"]`},
+    {q:'Time it: wrap the gather version and a sequential version (await each fetch one by one) with time.time() and compare totals.', hint:'Sequential should take ~6s, gather ~3s with delays 1,2,3.', answer:`import time
+start = time.time()
+asyncio.run(main())
+print(round(time.time() - start, 1))
+# gather: ~3.0   sequential: ~6.0`},
+    {q:'In words: why does asyncio NOT speed up a heavy pure-math computation?', hint:'What is the bottleneck asyncio addresses?', answer:`asyncio only overlaps WAITING time.
+A pure computation never waits — there is
+nothing to overlap. It needs the CPU the
+whole time, so juggling does not help.
+(That case needs multiprocessing instead.)`}
+  ],
+  quiz:[
+    {q:'What kind of bottleneck does asyncio solve?', a:'Waiting (I/O) — network calls, APIs, disk. Not heavy computation'},
+    {q:'What is await most similar to, from earlier lessons?', a:'yield — a pause point that freezes state and hands control back'},
+    {q:'Is the finish order of gathered coroutines with equal delays guaranteed?', a:'No — but the results list order always matches the order they were passed in'}
+  ],
+  links:[
+    {label:'Real Python — async IO walkthrough', url:'https://realpython.com/async-io-python/'},
+    {label:'Official docs — asyncio', url:'https://docs.python.org/3/library/asyncio.html'}
+  ]
+},
+{
+  group:'PORTFOLIO PROJECTS',
+  id:'project-rag', title:'Guided Project: RAG Troubleshooting Assistant',
+  lesson:`
+    <p>This is the guided project — the scope is given; the code is yours. It deliberately weaponizes your background: a system that answers "why did this error happen" from past ticket knowledge, which is literally the tool your Dell team never had.</p>
+    <p><b>Locked scope (v1):</b></p>
+    <ul>
+      <li><b>Does one thing:</b> given a text description of an error or issue, return the most similar past tickets plus a generated explanation of likely cause and fix.</li>
+      <li><b>Input:</b> one text description typed by the user.</li>
+      <li><b>Output:</b> top matching past ticket(s) and an LLM-written summary of probable cause and suggested fix, grounded in those tickets.</li>
+      <li><b>Data:</b> a JSON file of 15-20 realistic tickets YOU write — issue, root cause, fix, notes. Base them on anonymized patterns from your own experience; never real customer data, names, or logs.</li>
+      <li><b>Out of scope for v1:</b> live ticket integration, fine-tuning, multi-turn chat, authentication. Naming what you are NOT building is what makes v1 finishable.</li>
+    </ul>
+    <p><b>Build order — each step is a Git commit:</b></p>
+    <ol>
+      <li>Repo + README stub + the tickets JSON file. Commit.</li>
+      <li>Load and print all tickets (File I/O + JSON practice pays off here). Commit.</li>
+      <li>Basic retrieval WITHOUT AI first: match by shared keywords between the query and each ticket, return top 3. Commit. This proves the pipeline shape before any AI enters.</li>
+      <li>Upgrade retrieval to embeddings: use a library like sentence-transformers to embed tickets and query, rank by similarity. Commit.</li>
+      <li>Add the generation step: send the query + top tickets to an LLM API, prompt it to explain likely cause and fix USING ONLY the retrieved tickets. Commit.</li>
+      <li>Wrap in a simple interface — a command line loop is fine; a small Streamlit page is nicer. Commit.</li>
+      <li>Write 4-5 pytest tests (retrieval returns expected ticket for a known query, empty query handled, malformed JSON handled). Commit.</li>
+      <li>Deploy to Hugging Face Spaces (no Docker/WSL needed). Final commit + README with a screenshot and an RCA-style writeup: what broke while building, how you debugged it.</li>
+    </ol>
+    <p><b>The README matters as much as the code.</b> Structure it like one of your RCAs: problem, approach, what went wrong during the build, resolution, what v2 would add. That writeup IS your interview story.</p>
+  `,
+  practice:[
+    {q:'Write the 15-20 ticket JSON entries before any code. Quality bar: someone from your domain would nod at them.', hint:'Fields: id, issue, symptoms, root_cause, fix, notes. Vary the categories.'},
+    {q:'Do build steps 1-3 (through keyword retrieval) before touching anything AI. Working pipeline first, intelligence second.', hint:'Keyword match: lowercase both, split into words, count overlap, sort by count.'},
+    {q:'After step 5, deliberately test a query that matches NO tickets and watch what the LLM does. Then fix your prompt so it says "no similar past case found" instead of inventing one.', hint:'This is hallucination control — mention this exact test in your README; interviewers love it.'}
+  ],
+  quiz:[
+    {q:'Why build keyword retrieval before embeddings?', a:'To prove the whole pipeline shape works before adding AI complexity — debugging one new thing at a time'},
+    {q:'Why must the LLM prompt restrict answers to retrieved tickets only?', a:'To prevent hallucination — the entire point of RAG is grounding answers in real data'},
+    {q:'What belongs in the README beyond setup instructions?', a:'An RCA-style writeup: what broke during the build, how it was debugged, what v2 would add'}
+  ],
+  links:[
+    {label:'sentence-transformers — quickstart', url:'https://www.sbert.net/docs/quickstart.html'},
+    {label:'Streamlit — build a simple app', url:'https://docs.streamlit.io/get-started'},
+    {label:'Hugging Face Spaces — deploy guide', url:'https://huggingface.co/docs/hub/spaces'}
+  ]
+},
+{
+  group:'PORTFOLIO PROJECTS',
+  id:'project-solo', title:'Unguided Project: Requirements Only',
+  lesson:`
+    <p>Two unguided builds live here. No architecture, no build order, no hints — the point is decisions made alone. Come back to Claude only when stuck on something specific, not for the shape.</p>
+    <p><b>Warm-up drill — Expense Tracker (command line):</b></p>
+    <ul>
+      <li>Add an expense (amount + category)</li>
+      <li>Persist across runs — data survives closing the program</li>
+      <li>Summary view: total spent, and per-category totals</li>
+      <li>Bad input (like "abc" as an amount) handled without crashing</li>
+      <li>GitHub with commits as you go, not one dump</li>
+      <li>At least 3 tests</li>
+    </ul>
+    <p><b>Main unguided project — AI Reliability Monitor:</b></p>
+    <p>Requirements only. A tool that watches an LLM-powered function and reports on its behavior:</p>
+    <ul>
+      <li>Wraps calls to an LLM API (any provider, or a fake/mock one to avoid costs during development)</li>
+      <li>Records per call: response time, success or failure, and estimated token usage</li>
+      <li>Detects and flags at least two failure types — e.g. timeouts, empty responses, or responses failing a format check</li>
+      <li>Produces a summary report: total calls, failure rate, average latency, flagged calls</li>
+      <li>Persists its records so history accumulates across runs</li>
+      <li>Tested (5+ tests) and on GitHub with a README explaining what it monitors and why that matters in production</li>
+      <li>Stretch, optional: a retry-with-backoff mechanism for failed calls</li>
+    </ul>
+    <p>This is deliberately your Dell instinct — watching for failure, measuring, reporting — pointed at AI systems. That is the LLMOps pitch in project form, and it is YOUR design choices that make it interview material.</p>
+    <p><b>Done means:</b> both repos public, tests passing, READMEs written, and you can explain every decision out loud without notes.</p>
+  `,
+  practice:[
+    {q:'Before coding the monitor, write your own scoping doc: the 5 questions (one thing it does, input, output, data, out of scope for v1). Do not skip this — scoping unaided is the skill being trained.', hint:'Same 5-question format used for the RAG project.'},
+    {q:'Decide your storage yourself: file or SQLite? Write one sentence justifying the choice in the README.', hint:'There is no wrong answer — the justification is the point.'},
+    {q:'After finishing: explain the whole project out loud in under 3 minutes, recorded on your phone. Listen back once.', hint:'Awkward, effective. This is direct interview rehearsal.'}
+  ],
+  quiz:[
+    {q:'When is it okay to ask Claude for help during the unguided project?', a:'When stuck on something specific — not for the architecture or build order'},
+    {q:'What makes a design decision interview-worthy?', a:'Being able to explain WHY you chose it and what you traded off — not the choice itself'},
+    {q:'What is the definition of done for these projects?', a:'Public repo, passing tests, a real README, and the ability to explain every decision out loud without notes'}
+  ],
+  links:[
+    {label:'Make a README — structure guide', url:'https://www.makeareadme.com/'},
+    {label:'Anthropic API — getting started', url:'https://docs.claude.com/en/api/getting-started'}
+  ]
+},
+{
+  group:'CAREER',
+  id:'repositioning', title:'Repositioning: Resume, LinkedIn, Targets',
+  lesson:`
+    <p>Month 5 is packaging. The work exists — now it has to read correctly in 30 seconds, because that is how long a screener looks.</p>
+    <p><b>Resume framing — the one rule:</b> you are NOT "new to AI." You are a senior engineer (9-12 years) with deep production troubleshooting experience who has added an AI systems specialization. Every line should support that sentence.</p>
+    <ul>
+      <li>Headline shape: Senior Software Engineer \u00B7 Production Systems + Applied AI / LLMOps</li>
+      <li>Lead with the Dell experience reframed around transferable strengths: RCA on complex production systems, customer-facing escalations, working in undocumented codebases</li>
+      <li>Projects get their own section with live links: what it does, stack, one line on the hardest problem solved</li>
+      <li>Skills section mirrors job-posting language: Python, RAG, LLM APIs, embeddings, pytest, SQL, Git, monitoring/evaluation</li>
+      <li>Never write "learning" or "beginner" anywhere. The projects are evidence of DOING.</li>
+    </ul>
+    <p><b>LinkedIn profile rebuild (safe while employed):</b></p>
+    <ul>
+      <li>Headline and About can emphasize production + AI systems interest without any pivot language — no "seeking," "open to," or "excited for next chapter" while not ready</li>
+      <li>Turn ON the recruiter-only "Open to Work" setting (visible to recruiters, hidden from your company) — never the public green banner</li>
+      <li>Featured section: pin both project repos/demos</li>
+      <li>Posting, if any: pure learning/building content, no dissatisfaction, no company mentions. A post about a project is a build story, not an announcement.</li>
+    </ul>
+    <p><b>Target list — three buckets:</b></p>
+    <ul>
+      <li><b>GCCs</b> (global capability centers in India: the India arms of large US/EU product and finance companies) — the single biggest comp jump lever from a services-style employer</li>
+      <li><b>Product companies</b> — Indian and international, including remote-for-US roles</li>
+      <li><b>Indian AI-mission startups</b> — foundation-model and applied-AI companies funded under the IndiaAI push (check current names when you get here; they change). Higher risk, highest learning density.</li>
+    </ul>
+    <p><b>Outreach that works:</b> 10 warm, specific messages beat 100 generic ones. Shape: one line of genuine specific interest in their work, one line of what you bring (production + AI projects, with link), one soft ask (open to a short chat, or who is the right person to talk to). Never "any openings?"</p>
+  `,
+  practice:[
+    {q:'Rewrite your resume headline and top 3 bullets using the framing above. Test: does it read as senior engineer with AI specialization, or as career changer? Rewrite until the first.', hint:'If any bullet could belong to a fresher, cut or reframe it.'},
+    {q:'Draft one outreach message for a real person at a real target company. Three sentences max.', hint:'Specific interest + what you bring + soft ask.'},
+    {q:'Build the target list: 15 companies minimum across the three buckets, each with one role link that fits.', hint:'Search terms: Applied AI Engineer, LLMOps, AI Solutions Engineer, GenAI Engineer.'}
+  ],
+  quiz:[
+    {q:'What is the one sentence your entire resume must support?', a:'Senior engineer with deep production experience who has added an AI systems specialization — not someone new to AI'},
+    {q:'Which Open to Work setting is safe while employed?', a:'The recruiter-only setting — never the public profile banner'},
+    {q:'What makes an outreach message warm rather than generic?', a:'Specific interest in their actual work, a concrete link to your projects, and a soft ask — not "any openings"'}
+  ],
+  links:[
+    {label:'LinkedIn — Open to Work visibility settings', url:'https://www.linkedin.com/help/linkedin/answer/a507508'},
+    {label:'Google XYZ resume formula (accomplished X by Y measured by Z)', url:'https://www.inc.com/bill-murphy-jr/google-recruiters-say-these-5-resume-tips-including-x-y-z-formula-will-improve-your-odds-of-getting-hired-at-google.html'}
+  ]
+},
+{
+  group:'CAREER',
+  id:'interviews', title:'Interviews & Negotiation',
+  lesson:`
+    <p>The portfolio gets you in the room. This module is what happens in the room.</p>
+    <p><b>Project storytelling — the 3-minute arc.</b> For each project, be able to deliver, out loud, without notes:</p>
+    <ol>
+      <li><b>Problem</b> (30s): what gap it fills, why you picked it — tie to your escalation background</li>
+      <li><b>Approach</b> (60s): the architecture in plain words, one key design decision and its tradeoff</li>
+      <li><b>The hard part</b> (60s): what broke, how you debugged it — your strongest material; tell it like an RCA</li>
+      <li><b>Result + next</b> (30s): what works today, what v2 would add</li>
+    </ol>
+    <p>Practice by recording yourself on your phone. Listen back once per project. Two rounds of this beats ten silent rehearsals.</p>
+    <p><b>Answering "why are you moving?"</b> Never negativity about the current role. The honest positive version: spent years diagnosing production systems, want to BUILD them, and AI systems are where diagnostic skill plus building meet. One sentence, then stop talking.</p>
+    <p><b>The screening-round shape at product companies:</b> typically recruiter chat \u2192 coding screen (your DSA prep) \u2192 technical deep-dive (your projects + fundamentals) \u2192 system/behavioral rounds. The DSA section covers round 2; this module and your READMEs cover round 3.</p>
+    <p><b>Negotiation — the anchoring rule:</b></p>
+    <ul>
+      <li>State the target in the FIRST recruiter call, framed as fixed: looking at total fixed compensation of X, no variable component. Early anchoring filters out companies that can never reach it — that is time saved, not opportunity lost.</li>
+      <li>Never share current comp as the basis; state the expectation, not the history. If pressed: prefer to focus on the target for this role.</li>
+      <li>Multiple processes running in parallel is the only real leverage. Sequence interviews so offers can land close together.</li>
+      <li>Get every number in writing before resigning. Verbal offers are not offers.</li>
+    </ul>
+    <p><b>Resignation, when it comes:</b> standard notice, no bridges burned, no pivot story owed to anyone. The years of goodwill at Dell are an asset — references and boomerang options are real.</p>
+  `,
+  practice:[
+    {q:'Write the 4-part story arc for the RAG project as bullet notes, then record yourself delivering it in under 3 minutes.', hint:'The "hard part" section should be your longest and most specific.'},
+    {q:'Write your one-sentence "why are you moving" answer and say it out loud until it sounds natural, not rehearsed.', hint:'Diagnose to build. One sentence. Stop talking after it.'},
+    {q:'Roleplay the comp anchor: say the fixed-comp expectation sentence out loud as if to a recruiter, including handling "what is your current CTC?"', hint:'Prefer to focus on the target for this role — said calmly, once.'}
+  ],
+  quiz:[
+    {q:'What is your strongest storytelling material in any technical interview?', a:'What broke and how you debugged it — told like an RCA'},
+    {q:'When do you state the fixed-comp expectation?', a:'In the first recruiter call — early anchoring filters out companies that can never reach it'},
+    {q:'What is the only real negotiation leverage?', a:'Multiple parallel processes with offers landing close together'}
+  ],
+  links:[
+    {label:'STAR method for behavioral answers', url:'https://www.themuse.com/advice/star-interview-method'},
+    {label:'levels.fyi — India comp data for calibration', url:'https://www.levels.fyi/'}
+  ]
+},
+{
+  group:'FLUENCY',
+  id:'rebuild', title:'Rebuild From Scratch (the core drill)',
+  lesson:`
+    <p><b>The gap this fixes:</b> you can read code and follow what it does, but cannot write it from a blank file. That is not a knowledge problem — it is a reps problem, and reading more lessons will not fix it. Only writing unaided will.</p>
+    <p><b>The drill:</b> rebuild the PDF reader RAG system from an empty file. Same features. Your own code. No copy-paste from the old version.</p>
+    <p><b>Rules that make it work:</b></p>
+    <ul>
+      <li>Old file closed. Open it only when genuinely stuck for more than 15 minutes — and when you do, read the concept, close it again, then write your own version.</li>
+      <li>Library docs are allowed and encouraged. Looking up how chromadb.create_collection works is normal engineering. Copying your own old solution is not.</li>
+      <li>Type every line. No pasting, even from docs.</li>
+      <li>Build it in the same order you would explain it: load → chunk → embed → index → retrieve → generate → memory → citations.</li>
+    </ul>
+    <p><b>Why this matters more than a new project:</b> the RAG system is already on your CV and already deployed. Right now those bullets describe decisions you did not make. After this rebuild they describe decisions you did. Same artifact, now defensible under questioning.</p>
+    <p><b>The questions you must be able to answer cold when done:</b></p>
+    <ul>
+      <li>Why chunk at all? What breaks if you send the whole document?</li>
+      <li>Why overlap between chunks? What is lost without it?</li>
+      <li>What does an embedding actually represent, and why does similarity work?</li>
+      <li>Why a rolling window on history instead of keeping everything?</li>
+      <li>Why rewrite the query before retrieval? Give a concrete failing example without it.</li>
+      <li>How does the system avoid making things up, and how would you test that it works?</li>
+    </ul>
+    <p>If you cannot answer one of these, that is the part to rebuild most carefully.</p>
+  `,
+  practice:[
+    {q:'Session 1: from a blank file, write load_pdf and chunk_text yourself. Test chunk_text on a short string and verify the overlap is actually there.', hint:'Print the last 20 chars of chunk N and first 20 of chunk N+1 — they should share text.'},
+    {q:'Session 2: embeddings + vector store + retrieval. Query it with a question and print the retrieved chunks BEFORE adding any LLM call.', hint:'Retrieval quality is the whole game — see it working on its own first.'},
+    {q:'Session 3: add the LLM call with strict grounding. Deliberately ask something not in the document and confirm it declines instead of inventing.', hint:'This is your hallucination test — it belongs in the README.'},
+    {q:'Session 4: add conversational memory and query rewriting. Write down, in one sentence each, WHY each exists.', hint:'If you cannot justify it in a sentence, you have copied it rather than understood it.'},
+    {q:'Final: answer all six cold questions from the lesson out loud, recorded. Listen back once.', hint:'Any hesitation marks the section to revisit.'}
+  ],
+  quiz:[
+    {q:'When is looking at documentation fine, and when is it defeating the drill?', a:'Library docs are fine — that is normal engineering. Copying your own previous solution defeats the purpose'},
+    {q:'What makes the second build valuable when the first one already works?', a:'The first build outsourced the decisions; the second one makes them yours, so the CV bullets become defensible'},
+    {q:'What is the test for whether a feature is understood rather than copied?', a:'Being able to justify why it exists in one sentence, and describe what breaks without it'}
+  ],
+  links:[
+    {label:'ChromaDB docs', url:'https://docs.trychroma.com/'},
+    {label:'sentence-transformers docs', url:'https://www.sbert.net/'},
+    {label:'Groq API docs', url:'https://console.groq.com/docs/quickstart'}
+  ]
+},
+{
+  group:'FLUENCY',
+  id:'architecture', title:'Architecture Reps',
+  lesson:`
+    <p><b>The gap this fixes:</b> being handed a problem and freezing on structure. This is not a talent you lack — it is a skill with very few reps behind it. Ten short reps and the freeze goes.</p>
+    <p><b>The drill: ten minutes, on paper, no code.</b> For each problem below, write only:</p>
+    <ol>
+      <li><b>The nouns</b> — what things exist in this problem? (These become your classes, tables, or data structures.)</li>
+      <li><b>The verbs</b> — what happens to those things? (These become your functions.)</li>
+      <li><b>What is stored</b>, and where does it live between runs?</li>
+      <li><b>One decision and its tradeoff</b> — anything you had to choose between.</li>
+      <li><b>Out of scope</b> — what you are deliberately not building.</li>
+    </ol>
+    <p>That is the whole exercise. No code, no perfection, ten minutes, then move on. Doing ten mediocre reps beats agonising over one perfect design.</p>
+    <p><b>The nouns-and-verbs trick is the actual method.</b> Read the problem statement and underline every noun: for a parking lot — parking lot, level, spot, vehicle, ticket, payment. Those are your entities. Then the verbs: park, leave, calculate fee, find free spot. Those are your operations. Structure falls out of the language of the problem, which is why staring at a blank page feels impossible and reading the problem sentence by sentence does not.</p>
+    <p><b>The rule you already discovered yourself:</b> one thing, one job. When you noticed ExpenseTracker was trying to be both "one expense" and "the whole system," you found the single responsibility principle without being taught it. Apply that test to every box you draw.</p>
+    <p><b>The second test:</b> which parts can be tested by passing arguments and checking a return value? Push logic into those. Anything that talks to a screen, a keyboard, a file, or a network gets its own thin layer.</p>
+  `,
+  practice:[
+    {q:'Rep 1-3: design a URL shortener, a library book lending system, and a parking lot. Ten minutes each, paper only.', hint:'Nouns first, then verbs. Do not code any of them.'},
+    {q:'Rep 4-6: design a food delivery order flow, a hotel booking system, and a simple chat application.', hint:'Notice the shapes repeating across problems — that repetition is the skill forming.'},
+    {q:'Rep 7-10: design a rate limiter, an ATM, a movie ticket booking system, and a to-do app with reminders.', hint:'By now the freeze should be gone. Speed matters more than elegance.'},
+    {q:'After ten reps: go back to the Expense Tracker and design it again in ten minutes. Compare with your first attempt.', hint:'The point is seeing your own improvement, not producing a better tracker.'}
+  ],
+  quiz:[
+    {q:'What is the quickest way to find candidate classes in a problem statement?', a:'Underline the nouns — entities are usually named directly in the problem'},
+    {q:'What test tells you a class is doing too much?', a:'If it represents both one item and the system managing many items, it has two jobs and should be split'},
+    {q:'Why is ten mediocre reps better than one perfect design?', a:'The freeze comes from lack of repetition, not lack of quality — volume removes it'}
+  ],
+  links:[
+    {label:'Refactoring Guru — UML class diagrams', url:'https://refactoring.guru/uml-class-diagram'},
+    {label:'Refactoring Guru — design patterns catalogue', url:'https://refactoring.guru/design-patterns/catalog'}
+  ]
+},
+{
+  group:'AI ENGINEERING',
+  id:'agentic', title:'Agentic AI & Tool Calling',
+  lesson:`
+    <p>"Agentic AI" appears in nearly every JD you are seeing, so it is worth being precise about what it means. An <b>agent</b> is a system where the LLM decides which tools to call, in what order, using the results to decide what to do next — rather than just answering in one shot.</p>
+    <p>You have already tested one in production at work. What you have not done is build one. That is the gap this closes, and it is the natural next project after the rebuild.</p>
+    <p><b>The mechanism, which you already recorded in your own notes:</b></p>
+    <ul>
+      <li>The LLM cannot run code. It <i>decides</i> which function to call and with what arguments; your script executes it.</li>
+      <li>You pass a <b>tools list</b> — descriptions of available functions so the model knows what exists and when to use each.</li>
+      <li>The model returns <b>tool calls</b>: which function, which parameters.</li>
+      <li>Your code runs it, appends the result to the message history, and calls the model again — the model now sees the result and decides the next step.</li>
+      <li>That loop, repeated until the model stops requesting tools, is the entire agent.</li>
+    </ul>
+    <p><b>ReAct</b> (Reason + Act) is the standard pattern name: the model alternates between reasoning about what to do and taking an action, using each observation to inform the next step. Your day-9 note said "need to understand" — this is it.</p>
+    <p><b>What makes agents hard in production</b> (and what interviewers probe): they loop forever, call the wrong tool, misread results, or take expensive paths. Guardrails matter — maximum iteration counts, timeouts, validating tool outputs before feeding them back, and logging every step so failures can be traced. This is exactly the evaluation lens you already apply at work, which is why you can speak about it credibly.</p>
+    <p><b>Suggested build:</b> an agent that answers questions about your own machine or a small dataset — with 3-4 tools (search files, read a file, run a calculation, query a database). Small scope, real loop, full logging.</p>
+  `,
+  practice:[
+    {q:'Reread your own day-5 notes on tool calling, then build a single-tool agent from scratch: one function the model can choose to call.', hint:'Start with something trivial like get_current_time so the loop is the only new thing.'},
+    {q:'Expand to 3-4 tools and add a max-iterations guard so it cannot loop forever.', hint:'A while loop with a counter, breaking when the model stops requesting tools or the cap is hit.'},
+    {q:'Add step logging: print every reasoning step, tool call, and result. Then deliberately give it a question needing two tools in sequence and watch the trace.', hint:'This trace is your interview demo — it shows the loop working, not just the answer.'},
+    {q:'Break it on purpose: make a tool return garbage, and see how the agent responds. Add handling.', hint:'Failure behaviour is what production readiness actually means.'}
+  ],
+  quiz:[
+    {q:'Does the LLM execute the tool itself?', a:'No — it decides which function and which arguments; your code executes it and passes the result back'},
+    {q:'What is the ReAct pattern?', a:'Alternating reasoning and acting — the model reasons about what to do, acts via a tool, observes the result, and repeats'},
+    {q:'Name two guardrails an agent needs in production.', a:'Maximum iteration limits and validation of tool outputs; also timeouts and step logging for traceability'}
+  ],
+  links:[
+    {label:'Groq — tool use documentation', url:'https://console.groq.com/docs/tool-use'},
+    {label:'Anthropic — tool use guide', url:'https://docs.claude.com/en/docs/agents-and-tools/tool-use/overview'},
+    {label:'ReAct paper (original)', url:'https://arxiv.org/abs/2210.03629'}
+  ]
+},
+{
+  group:'AI ENGINEERING',
+  id:'cloud', title:'Cloud Fundamentals',
+  lesson:`
+    <p>Cloud appears in essentially every backend and AI engineering JD, and you currently have none of it. Treat this as a <b>checkbox gap</b>: it blocks you at the filtering stage more than in interviews, so the goal is working familiarity, not certification.</p>
+    <p><b>Pick ONE provider.</b> AWS has the largest market share and the most job postings; GCP is common at AI-forward companies. Either is fine — the concepts transfer. Do not learn two.</p>
+    <p><b>The five things that actually matter for your roles:</b></p>
+    <ul>
+      <li><b>Compute</b> — where your code runs. A virtual machine (EC2 on AWS) is a rented server. Serverless functions (Lambda) run your code on demand without managing a server at all.</li>
+      <li><b>Storage</b> — object storage (S3) holds files: documents, model artifacts, logs. Nearly every AI pipeline reads from and writes to it.</li>
+      <li><b>Databases</b> — managed SQL (RDS) means the provider handles backups, patching, and availability instead of you.</li>
+      <li><b>Identity and access (IAM)</b> — who and what is allowed to do what. This is where most real-world cloud mistakes and security incidents happen.</li>
+      <li><b>Networking basics</b> — how services reach each other and what is exposed publicly. Enough to reason about why something cannot connect.</li>
+    </ul>
+    <p><b>The AI-specific layer</b>, once the above is comfortable: managed model endpoints (AWS Bedrock, GCP Vertex AI), and where vector databases live in a deployed architecture.</p>
+    <p><b>The honest scope:</b> deploy one small thing end to end, and you can speak about cloud credibly. That is worth more than a half-finished certification course, and it takes a weekend rather than a month.</p>
+  `,
+  practice:[
+    {q:'Create a free-tier account on AWS or GCP. Set a billing alert immediately, before anything else.', hint:'Billing alerts prevent the classic accidental-charges story. Do this first, every time.'},
+    {q:'Upload a file to object storage (S3 or GCS) from the console, then do the same from Python using the provider SDK.', hint:'boto3 for AWS, google-cloud-storage for GCP.'},
+    {q:'Deploy your rebuilt RAG app to a cloud service rather than Streamlit Cloud — even a single small VM counts.', hint:'This turns a checkbox gap into a real portfolio line.'},
+    {q:'Write one paragraph explaining your deployed architecture: what runs where, what stores what, what is public.', hint:'This paragraph is your answer when an interviewer asks about your cloud experience.'}
+  ],
+  quiz:[
+    {q:'What is object storage typically used for in an AI pipeline?', a:'Holding files — source documents, model artifacts, logs — that the pipeline reads from and writes to'},
+    {q:'What does IAM govern, and why does it matter?', a:'Who and what is permitted to do what; most real-world cloud security incidents trace back to it'},
+    {q:'What is the minimum that makes cloud experience credible on a CV?', a:'One small thing actually deployed end to end, with the ability to explain what runs where'}
+  ],
+  links:[
+    {label:'AWS — free tier and getting started', url:'https://aws.amazon.com/free/'},
+    {label:'Google Cloud — free tier', url:'https://cloud.google.com/free'},
+    {label:'AWS Bedrock overview', url:'https://aws.amazon.com/bedrock/'}
+  ]
+},
+{
+  group:'CAREER',
+  id:'applying', title:'Applying: Daily Loop & JD Triage',
+  lesson:`
+    <p>You are applying 2-5 per day. That volume only pays off with a filter, otherwise it becomes noise that generates rejections and drains morale.</p>
+    <p><b>Triage every JD into one of three buckets:</b></p>
+    <ul>
+      <li><b>Apply now</b> — Python-first, AI/LLM central to the role, backend or applied AI. Your CV already speaks to these.</li>
+      <li><b>Apply with a note of what to learn</b> — good fit but names one gap (cloud, a specific framework). Apply anyway; log the gap.</li>
+      <li><b>Skip</b> — TypeScript/Node/full-stack-first roles, or anything where AI is incidental. Chasing a new language now fragments you badly and you will lose weeks.</li>
+    </ul>
+    <p><b>Keep a JD gap log.</b> One line per application: company, role, and any skill named that you do not have. After 20 applications the pattern is unmistakable, and it tells you what to learn next far better than any curriculum. Your own instinct here was right — this is better signal than a plan written months ago.</p>
+    <p><b>Expect the timeline to be slow.</b> Applications take weeks to convert to first calls. That is normal and not a signal about your profile. Applying from a stable job is a genuine advantage: you can hold out for the number you actually want, and you never have to accept something out of urgency.</p>
+    <p><b>Before the first interview lands, two things must be true:</b> the RAG rebuild is done (so your CV bullets are defensible), and you can tell the project story out loud in under three minutes. Coding screens come fast — usually within a week or two of a recruiter call.</p>
+    <p><b>On the number:</b> your position is that leaving a stable ₹32L for ₹42L is a worse deal per hour, and only a near-double justifies the move. That is sound, and worth stating early in recruiter calls so neither side wastes time. Relocation changes the maths — compare net income against local cost of living and what public services actually deliver, not the raw converted figure.</p>
+  `,
+  practice:[
+    {q:'Start the JD gap log today — a simple sheet: date, company, role, skills named that you lack.', hint:'One line per application. Review it every 20 applications.'},
+    {q:'Review your last 10 applications and categorise each into the three buckets. Notice how many were skips you should not have sent.', hint:'Precision beats volume once the filter is working.'},
+    {q:'Write your fixed-comp expectation sentence and use it in the first recruiter call, not at offer stage.', hint:'Early anchoring filters out companies that can never reach your number.'}
+  ],
+  quiz:[
+    {q:'Which JDs should you skip outright?', a:'TypeScript/Node/full-stack-first roles, and anything where AI is incidental — chasing a new language now fragments your focus'},
+    {q:'What does the JD gap log give you that a curriculum cannot?', a:'Real market signal about which skills actually appear in the roles you want, right now'},
+    {q:'What must be true before your first technical interview?', a:'The RAG rebuild is done so your CV is defensible, and you can tell the project story out loud in under three minutes'}
+  ],
+  links:[
+    {label:'levels.fyi — comp calibration', url:'https://www.levels.fyi/'},
+    {label:'PTE Academic — book a test', url:'https://www.pearsonpte.com/'}
+  ]
+},
+{
+  group:'CAREER',
+  id:'relocation', title:'Relocation Track',
+  lesson:`
+    <p>This runs on its own timeline, independent of studying, and has long lead times — so starting early matters more than doing it perfectly.</p>
+    <p><b>Two routes, usually run in parallel:</b></p>
+    <ul>
+      <li><b>Points-based self-migration</b> — you apply yourself, no job offer needed, get residency, then find work. Australia (189/190) and Canada (Express Entry) work this way. Slower, more paperwork, but not dependent on any employer.</li>
+      <li><b>Employer sponsorship</b> — a company hires and sponsors you. Faster, but tied to that employer initially. Germany (EU Blue Card), Netherlands, Ireland, UK, and Australia 482 fit here.</li>
+    </ul>
+    <p><b>Destination notes for a senior software engineer:</b></p>
+    <ul>
+      <li><b>Australia</b> — software engineering is on the skills lists, but points-tested PR is competitive (roughly 80+ points recently). Needs an ACS skills assessment and a strong English score. English-speaking, high liveability.</li>
+      <li><b>Germany</b> — large number of unfilled IT roles and a comparatively accessible Blue Card route. Growing English-speaking tech scene in Berlin and Munich.</li>
+      <li><b>Canada</b> — Express Entry needs no job offer; spouse typically receives an open work permit.</li>
+      <li><b>Netherlands / Ireland</b> — straightforward highly-skilled-migrant permits, strong English-speaking tech markets.</li>
+      <li><b>UK</b> — Skilled Worker visa; senior backend salaries sit comfortably above the threshold.</li>
+    </ul>
+    <p><b>English test: required, no exemption.</b> Canada allows none at all. Australia exempts only certain passport holders — Indian citizens are not exempt regardless of English-medium schooling. More importantly it is a <i>scoring lever</i>, not just a threshold: proficient and superior bands add meaningful points, often deciding whether you are invited at all. Aim for the top band, not a pass. PTE Academic is fully computer-based and many find its format more predictable than IELTS.</p>
+    <p><b>On tax:</b> most of these countries tax more than India at your income level, not less. The argument is not lower tax — it is that functioning healthcare, transport, air quality, and public services come back for it. If low tax is the priority instead, that points to Dubai or Singapore, with different lifestyle tradeoffs.</p>
+  `,
+  practice:[
+    {q:'Book PTE Academic. This gates everything downstream and has weeks of lead time.', hint:'Target the superior band, not the minimum. Format practice matters as much as English ability.'},
+    {q:'Start a skills assessment: ACS for Australia, or WES for Canada. These take weeks to months.', hint:'You cannot submit an expression of interest without one.'},
+    {q:'Pick a primary and a secondary destination, and note why each — cost of living, visa route, job market for your stack.', hint:'Australia and Canada reward patience and paperwork; Germany and Netherlands reward finding an employer quickly.'},
+    {q:'Run a net-income comparison for one target city: salary after tax, minus rent and living costs, versus your current position.', hint:'Compare lifestyle delivered, not the converted number.'}
+  ],
+  quiz:[
+    {q:'Does English-medium schooling in India exempt you from a language test?', a:'No. Canada allows no exemptions; Australia exempts only certain passport holders, which does not include India'},
+    {q:'Why aim for a top band rather than just passing?', a:'In points-based systems the higher bands add substantial points, often deciding whether you are invited at all'},
+    {q:'What is the honest tax argument for relocating?', a:'Not lower tax — most destinations tax more. It is that functioning public services and infrastructure come back for it'}
+  ],
+  links:[
+    {label:'Australia — Department of Home Affairs', url:'https://immi.homeaffairs.gov.au/'},
+    {label:'Canada — Express Entry', url:'https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry.html'},
+    {label:'Germany — EU Blue Card', url:'https://www.make-it-in-germany.com/en/visa-residence/types/eu-blue-card'},
+    {label:'PTE Academic', url:'https://www.pearsonpte.com/'}
+  ]
+},
+{
+  group:'ARCHITECTURE',
+  id:'patterns', title:'Design Patterns (named, interview-ready)',
+  lesson:`
+    <p>Architecture Reps teaches you how to <i>think</i> about structure. This module gives you the <b>named patterns</b> interviewers ask about by name — "solution architect" and "technical lead" JDs list these explicitly, and at 10 years you are expected to recognise them.</p>
+    <p>You do not need all 23 classic patterns. Five carry almost all interview weight, and you have already used three without knowing their names.</p>
+    <p><b>1. Factory</b> — a function or class whose job is creating objects, so callers do not need to know which concrete type they get.</p>
+    <pre><code>def get_storage(kind):
+    if kind == "sqlite":
+        return SQLiteStore()
+    elif kind == "json":
+        return JSONStore()
+
+store = get_storage("sqlite")   # caller does not care which</code></pre>
+    <p>You met this exact idea when weighing JSON versus SQLite for the expense tracker. A factory is what lets you swap them without touching the rest of the code.</p>
+    <p><b>2. Strategy</b> — several interchangeable implementations behind one shared interface, chosen at runtime.</p>
+    <pre><code>class OpenAIEmbedder:
+    def embed(self, text): ...
+
+class LocalEmbedder:
+    def embed(self, text): ...
+
+# anything that calls .embed() works with either
+def build_index(chunks, embedder):
+    return [embedder.embed(c) for c in chunks]</code></pre>
+    <p>Directly relevant to AI work: swapping model providers, embedding backends, or vector stores is the textbook case. This is the honest answer to "how would you make this provider-agnostic?"</p>
+    <p><b>3. Singleton</b> — exactly one instance exists, shared everywhere. Database connections and model clients are the usual examples. Interviewers often follow up with its downsides: it is effectively a global, which makes testing harder and hides dependencies. Knowing the criticism scores better than just naming the pattern.</p>
+    <p><b>4. Observer</b> — objects subscribe to an event and get notified when it happens, without the publisher knowing who is listening. Event systems, webhooks, and logging hooks work this way.</p>
+    <p><b>5. Repository</b> — a layer that isolates data access from business logic. Your calculate functions take a list of expenses; they do not know or care whether it came from SQLite, JSON, or an API. You built this pattern in the expense tracker by splitting storage from calculation.</p>
+    <p><b>The two principles underneath all of them</b>, worth naming in interviews:</p>
+    <ul>
+      <li><b>Single responsibility</b> — one class, one job. You discovered this yourself when ExpenseTracker was trying to be both one expense and the whole system.</li>
+      <li><b>Dependency inversion</b> — depend on an interface, not a concrete implementation. This is why passing an embedder into build_index beats hardcoding one inside it, and why the function stays testable.</li>
+    </ul>
+    <p><b>The interview trap to avoid:</b> naming patterns for their own sake. The good answer is always "I used X because Y would otherwise happen" — pattern plus justification. Applying patterns where they are not needed is a recognised anti-pattern in itself, and interviewers probe for it.</p>
+  `,
+  practice:[
+    {q:'Refactor your rebuilt RAG system so the embedding model is passed in rather than hardcoded (Strategy). Then swap it for a different model without changing the indexing code.', hint:'Any object with an .encode() or .embed() method should work.', answer:`def build_index(chunks, embedder):
+    embeddings = embedder.encode(chunks).tolist()
+    ...
+
+# now either works:
+build_index(chunks, SentenceTransformer("all-MiniLM-L6-v2"))
+build_index(chunks, SomeOtherEmbedder())`},
+    {q:'Write a factory that returns either a SQLite-backed or JSON-backed store, both exposing save() and load().', hint:'Two classes with identical method names, one function choosing between them.', answer:`class JSONStore:
+    def save(self, item): ...
+    def load(self): ...
+
+class SQLiteStore:
+    def save(self, item): ...
+    def load(self): ...
+
+def get_store(kind):
+    return SQLiteStore() if kind == "sqlite" else JSONStore()`},
+    {q:'For each of the five patterns, write one sentence: what problem it solves, and one case where using it would be over-engineering.', hint:'The second half is what separates a senior answer from a memorised one.'},
+    {q:'Look back at your PDF reader and name every pattern already present, whether you intended it or not.', hint:'Repository and Strategy are both in there. Being able to point at them in your own code is a strong interview move.'}
+  ],
+  quiz:[
+    {q:'What does the Strategy pattern let you do, in AI terms?', a:'Swap model providers, embedders, or vector stores at runtime because they share a common interface'},
+    {q:'What is the standard criticism of Singleton?', a:'It is effectively a global — it hides dependencies and makes testing harder'},
+    {q:'What makes a pattern answer sound senior rather than memorised?', a:'Pairing the pattern with why it was needed, and knowing when using it would be over-engineering'}
+  ],
+  links:[
+    {label:'Refactoring Guru — design patterns catalogue', url:'https://refactoring.guru/design-patterns/catalog'},
+    {label:'Refactoring Guru — SOLID principles', url:'https://refactoring.guru/design-principles'},
+    {label:'Python Patterns — practical guide', url:'https://python-patterns.guide/'}
+  ]
+},
+{
+  group:'ARCHITECTURE',
+  id:'fastapi', title:'REST APIs & FastAPI',
+  lesson:`
+    <p><b>The gap this closes:</b> every JD mentioning microservices, application development, or solution architecture assumes you have built web services — an endpoint another system calls over HTTP, not a script you run yourself. You have built CLI tools and a Streamlit app. You have never built an API. This is the fastest high-value gap to close.</p>
+    <p><b>What a REST API actually is:</b> your code, exposed at a URL, that other programs call. They send a request; you return data, usually JSON. The vocabulary:</p>
+    <ul>
+      <li><b>Endpoint</b> — a URL path that does one thing: /expenses, /search</li>
+      <li><b>Method</b> — GET reads, POST creates, PUT updates, DELETE removes</li>
+      <li><b>Request body</b> — JSON the caller sends you</li>
+      <li><b>Response</b> — JSON you send back, with a status code (200 fine, 404 not found, 500 broken) — the same codes you already read when debugging</li>
+    </ul>
+    <p><b>FastAPI</b> is the modern Python standard. Minimal example:</p>
+    <pre><code>from fastapi import FastAPI
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class Expense(BaseModel):
+    amount: float
+    category: str
+    date: str
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+@app.post("/expenses")
+def add_expense(expense: Expense):
+    save_to_db(expense)
+    return {"saved": True, "category": expense.category}</code></pre>
+    <p>Run it with <code>uvicorn main:app --reload</code>, then open <code>/docs</code> in a browser — FastAPI generates interactive API documentation automatically, which is a large part of why it is preferred.</p>
+    <p><b>Pydantic</b> (the BaseModel above) is the validation layer: if a caller sends a string where a float is expected, FastAPI rejects it with a clear error before your code runs. This is the "handle bad input gracefully" requirement, solved structurally rather than with scattered try/except blocks.</p>
+    <p><b>Why this matters for AI roles specifically:</b> a deployed RAG system is normally an API, not a Streamlit page. A POST /ask endpoint taking a question and returning an answer with sources is what production looks like — Streamlit is the demo layer, the API is the product. Wrapping your rebuilt RAG system in FastAPI turns it from a demo into something that reads as production engineering.</p>
+    <p><b>Async connects here too:</b> your asyncio module was not academic. FastAPI endpoints can be <code>async def</code>, letting one server handle many concurrent requests while each waits on an LLM call. That is exactly the overlapping-waits case asyncio exists for.</p>
+  `,
+  practice:[
+    {q:'Build a two-endpoint API from scratch: GET /health returning ok, and POST /echo returning whatever JSON it receives. Run it and test via /docs.', hint:'pip install fastapi uvicorn, then uvicorn main:app --reload', answer:`from fastapi import FastAPI
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class Msg(BaseModel):
+    text: str
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+@app.post("/echo")
+def echo(msg: Msg):
+    return {"you_sent": msg.text}`},
+    {q:'Wrap your rebuilt RAG system in a POST /ask endpoint that takes a question and returns the answer plus source chunks.', hint:'The retrieval and generation code already exists — this is only the HTTP layer around it.'},
+    {q:'Add proper error handling: what should /ask return if the question is empty, or if the vector store has not been built yet?', hint:'FastAPI HTTPException with a 400 or 503 status code.'},
+    {q:'Make the /ask endpoint async and explain in one sentence what that buys you.', hint:'Concurrent requests while each waits on the LLM API call.'}
+  ],
+  quiz:[
+    {q:'Which HTTP method creates a new resource?', a:'POST'},
+    {q:'What does Pydantic give you in a FastAPI app?', a:'Automatic request validation — bad input is rejected with a clear error before your code runs'},
+    {q:'Why is an API the production form of a RAG system rather than Streamlit?', a:'Streamlit is a demo interface; an API is what other systems and front-ends actually call'}
+  ],
+  links:[
+    {label:'FastAPI — official tutorial', url:'https://fastapi.tiangolo.com/tutorial/'},
+    {label:'Pydantic — models documentation', url:'https://docs.pydantic.dev/latest/concepts/models/'},
+    {label:'REST API design basics', url:'https://restfulapi.net/'}
+  ]
+},
+{
+  group:'ARCHITECTURE',
+  id:'microservices', title:'Microservices & System Design Basics',
+  lesson:`
+    <p>Several of your target JDs name microservices and scalable systems. You do not need deep distributed-systems expertise for applied AI roles, but you must be able to hold a credible conversation. This module is the working vocabulary.</p>
+    <p><b>Monolith vs microservices:</b> a monolith is one application containing everything. Microservices split it into separate small services that talk over the network — each independently deployable and scalable.</p>
+    <p><b>The honest tradeoff</b>, which is what interviewers actually probe:</p>
+    <ul>
+      <li><b>Monolith</b>: simpler to build, test, and debug. One deployment. Everything in one place.</li>
+      <li><b>Microservices</b>: teams ship independently, each service scales separately — but you inherit network failures, distributed debugging, data consistency problems, and far more operational complexity.</li>
+    </ul>
+    <p>The senior answer is never "microservices are better." It is "monolith until team size or scaling pressure justifies the split." Premature microservices is a well-known failure mode.</p>
+    <p><b>Concepts you should be able to define:</b></p>
+    <ul>
+      <li><b>Load balancer</b> — distributes incoming requests across multiple copies of a service</li>
+      <li><b>Horizontal vs vertical scaling</b> — more machines versus a bigger machine</li>
+      <li><b>Stateless service</b> — holds no memory between requests, so any copy can serve any request. This is what makes horizontal scaling possible.</li>
+      <li><b>Caching</b> — storing computed results so repeat work is avoided. In AI systems, caching embeddings or frequent query responses saves real money.</li>
+      <li><b>Message queue</b> — work handed off to be processed later rather than making the caller wait. Long-running LLM jobs are a natural fit.</li>
+      <li><b>Rate limiting</b> — capping how often a caller can hit your service. Essential when your backend costs money per call, as LLM APIs do.</li>
+    </ul>
+    <p><b>Applied to a RAG system at scale</b>, which is the version of this question you are most likely to get: document ingestion becomes a background job on a queue; embeddings are cached rather than recomputed; the vector store is a managed service, not an in-process instance; the API layer is stateless behind a load balancer; and LLM calls are rate-limited and retried with backoff. Being able to describe that shape is the bar for these JDs — not designing Twitter.</p>
+    <p><b>Your genuine advantage here:</b> ten years debugging production failures means you understand what actually breaks in distributed systems, which most candidates only know theoretically. Lead with failure modes when answering — that is where your experience shows.</p>
+  `,
+  practice:[
+    {q:'Draw your PDF reader as it would look at scale: ingestion, storage, retrieval, generation, API. Mark what is stateless and what holds state.', hint:'Ten minutes, paper. The vector store and document storage hold state; the API layer should not.'},
+    {q:'Write a one-paragraph answer to "how would you scale this to 10,000 users?" for your RAG system.', hint:'Queue for ingestion, cached embeddings, managed vector store, stateless API behind a load balancer, rate-limited LLM calls.'},
+    {q:'For three failures you have debugged at work, note which distributed-systems concept they map to (timeout, retry storm, stale cache, resource exhaustion).', hint:'This converts your existing experience into system design vocabulary.'},
+    {q:'Practice arguing the unpopular side: give a concrete case where a monolith is the correct choice over microservices.', hint:'Small team, single deployment, unclear domain boundaries.'}
+  ],
+  quiz:[
+    {q:'What makes a service horizontally scalable?', a:'Being stateless — holding no memory between requests, so any instance can serve any request'},
+    {q:'What is the senior answer on monolith vs microservices?', a:'Monolith until team size or scaling pressure justifies the split; premature microservices adds complexity without benefit'},
+    {q:'Name two things worth caching in a RAG system and why.', a:'Embeddings (expensive to recompute) and frequent query responses (saves LLM API cost and latency)'}
+  ],
+  links:[
+    {label:'System Design Primer (GitHub)', url:'https://github.com/donnemartin/system-design-primer'},
+    {label:'Martin Fowler — microservices', url:'https://martinfowler.com/articles/microservices.html'}
+  ]
+},
+{
+  group:'ARCHITECTURE',
+  id:'pandas', title:'Pandas & NumPy (weekend module)',
+  lesson:`
+    <p>Low priority, cheap insurance. Appears in data-flavoured Python JDs and costs a weekend, not a month. Do not let this displace architecture or cloud.</p>
+    <p><b>NumPy</b> gives you fast numerical arrays. Its relevance to you is direct: embeddings are NumPy arrays. When your RAG system computes similarity between vectors, that is NumPy underneath.</p>
+    <pre><code>import numpy as np
+
+a = np.array([1, 2, 3])
+b = np.array([4, 5, 6])
+print(a + b)          # [5 7 9] — elementwise, no loop
+print(np.dot(a, b))   # 32 — dot product, the basis of similarity</code></pre>
+    <p><b>Pandas</b> is tabular data — think a spreadsheet you manipulate in code. The core object is a DataFrame.</p>
+    <pre><code>import pandas as pd
+
+df = pd.read_csv("expenses.csv")
+print(df.head())                          # first rows
+print(df["amount"].sum())                 # total
+print(df.groupby("category")["amount"].sum())   # per-category totals</code></pre>
+    <p>Notice that last line: it is your expense tracker's per-category calculation in a single expression, and it is the same operation as SQL GROUP BY. Pandas, SQL, and your hand-written dict counter are three routes to one idea — recognising that is more useful than memorising method names.</p>
+    <p><b>The operations worth knowing:</b> read_csv, head, filtering with a condition (<code>df[df["amount"] > 500]</code>), groupby with an aggregation, sort_values, and merge (which is a JOIN).</p>
+    <p><b>Scope discipline:</b> know these well enough to do a simple analysis and read someone else's pandas code. Anything deeper is a different career track and not what your target roles need.</p>
+  `,
+  practice:[
+    {q:'Export some expense data to CSV, load it with pandas, and produce total plus per-category totals.', hint:'read_csv, then groupby("category")["amount"].sum()', answer:`import pandas as pd
+df = pd.read_csv("expenses.csv")
+print("Total:", df["amount"].sum())
+print(df.groupby("category")["amount"].sum())`},
+    {q:'Filter to only expenses above a threshold, then sort by amount descending.', hint:'Boolean indexing then sort_values with ascending=False.', answer:`big = df[df["amount"] > 500]
+print(big.sort_values("amount", ascending=False))`},
+    {q:'Using NumPy, compute cosine similarity between two embedding vectors by hand.', hint:'dot product divided by the product of both norms.', answer:`import numpy as np
+def cosine(a, b):
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))`}
+  ],
+  quiz:[
+    {q:'What pandas operation corresponds to SQL GROUP BY?', a:'groupby, followed by an aggregation such as .sum()'},
+    {q:'Where does NumPy already appear in your RAG work?', a:'Embeddings are NumPy arrays, and similarity search is vector maths on them'},
+    {q:'How much pandas is enough for your target roles?', a:'Enough to do a simple analysis and read others\' pandas code — deeper is a different career track'}
+  ],
+  links:[
+    {label:'Pandas — 10 minutes to pandas', url:'https://pandas.pydata.org/docs/user_guide/10min.html'},
+    {label:'NumPy — absolute beginners guide', url:'https://numpy.org/doc/stable/user/absolute_beginners.html'}
+  ]
+},
+{
+  group:'FLUENCY',
+  id:'expense-tracker', title:'Expense Tracker (in progress)',
+  lesson:`
+    <p>The practice drill for dev fluency and the professional build workflow. Currently <b>in progress</b> — walking skeleton runs, everything after that is open.</p>
+    <p><b>Requirements (the original spec):</b></p>
+    <ul>
+      <li>Add an expense (amount + category)</li>
+      <li>Persist across runs — data survives closing the program</li>
+      <li>Summary: total spent, and total per category</li>
+      <li>Bad input (like "abc" as an amount) handled without crashing</li>
+      <li>GitHub with commits as you go, not one dump at the end</li>
+      <li>At least 3 tests</li>
+    </ul>
+
+    <p><b>Decisions already made, and why</b> — these are your interview answers, keep them:</p>
+    <ul>
+      <li><b>SQLite over JSON</b> — the future spending-analysis idea is all filtering and grouping, which is what SQL is for; JSON would mean hand-written loops.</li>
+      <li><b>User-entered dates, not auto-stamped</b> — so backdated expenses can be logged.</li>
+      <li><b>Functions, not classes</b> — one store, no repeated stateful entities, so a class would add ceremony without buying anything. If it went multi-user, a User class would earn its place (each user holds independent state), plus a user_id column on the schema.</li>
+      <li><b>Parameterised SQL (? placeholders)</b> — not string concatenation. Handles quoting and types correctly, and prevents SQL injection.</li>
+    </ul>
+
+    <p><b>The structural principle this drill teaches:</b> functions that ask the user for input, print to the screen, or touch a database are hard to test. Functions that take arguments and return values are trivial to test. So keep calculation logic pure — <code>calculate_total(expenses)</code> returns a number — and let separate thin functions do the talking and the saving. This is why "print total per category" got split into calculate + print.</p>
+
+    <p><b>The professional build workflow</b> (transferable to any project, including take-home assignments):</p>
+    <ol>
+      <li>Read the spec twice; separate what is <i>required</i> from what is <i>your choice</i>. The choices are what interviewers ask about.</li>
+      <li>Brainstorm doc: data model, function list, decisions with reasons, out-of-scope. 30-60 minutes, not a day.</li>
+      <li>Repo first — first commit is scaffolding, .gitignore, README stub. Commit history that starts with planning reads as professional.</li>
+      <li><b>Walking skeleton</b> — thinnest end-to-end path that runs, ugly is fine. Proves the pieces connect before investing in any of them.</li>
+      <li>Then the loop: smallest next piece → make it work → test it → commit → repeat.</li>
+      <li>Harden: try to break your own program. Each fix is a commit and an interview story.</li>
+      <li>README last, written for a stranger — including your decisions and why.</li>
+    </ol>
+    <p><b>The rule underneath all of it:</b> at the end of any session, the project runs. It may do less than you want, but it never sits broken overnight.</p>
+
+    <p><b>Current state:</b> input → create table → write → read back works, using parameterised queries. Still open: the calculate functions, printing summaries, validation, tests, README.</p>
+  `,
+  practice:[
+    {q:'Clean up the skeleton: remove the str() around the amount (it stores text in an INT column), rename the date variable that shadows the datetime import, delete the stray pass.', hint:'Small fixes, but the shadowing one causes confusing bugs later.'},
+    {q:'Refactor the db functions to use "with sqlite3.connect(...)" so connections close themselves, instead of passing cursor and conn between functions.', hint:'Same context-manager idea as with open() for files — it also fixes the never-closed connection.'},
+    {q:'Make read_expense_from_db RETURN the rows instead of printing them, then write calculate_total(expenses) and calculate_category_totals(expenses) as pure functions.', hint:'Pure means: arguments in, value out, no printing, no database.'},
+    {q:'Write 3 pytest tests against the pure calculate functions using hand-made sample data — no database, no keyboard.', hint:'This is the payoff of the split: testing becomes three lines each.', answer:`def test_total():
+    sample = [{"amount": 100}, {"amount": 50}]
+    assert calculate_total(sample) == 150
+
+def test_category_totals():
+    sample = [{"category": "food", "amount": 100},
+              {"category": "food", "amount": 50}]
+    assert calculate_category_totals(sample) == {"food": 150}`},
+    {q:'Add input validation: non-numeric amount, missing fields, malformed date. Decide whether it lives in its own function or as try/except around input, and justify it in one line.', hint:'Either is defensible; the justification is what matters.'},
+    {q:'Write the README: what it does, how to run it, your four design decisions with reasons, and what v2 would add.', hint:'The decisions section pre-answers the interview questions.'}
+  ],
+  quiz:[
+    {q:'Why were SQLite and user-entered dates chosen?', a:'SQLite because the future analysis feature is filtering and grouping, which SQL does natively; user-entered dates so backdated expenses can be logged'},
+    {q:'What makes a function easy to test?', a:'It takes arguments and returns a value — no keyboard, screen, file, or database involved'},
+    {q:'Why build a walking skeleton before filling in features?', a:'It proves the pieces connect end to end before you invest in any of them — problems surface in hour one, not on day three'},
+    {q:'Why parameterised queries instead of building SQL strings?', a:'The library handles quoting and types correctly, and it prevents SQL injection'}
+  ],
+  links:[
+    {label:'Python sqlite3 docs (see parameterised queries)', url:'https://docs.python.org/3/library/sqlite3.html'},
+    {label:'pytest — getting started', url:'https://docs.pytest.org/en/stable/getting-started.html'},
+    {label:'Make a README — structure guide', url:'https://www.makeareadme.com/'}
+  ]
+},
+{
+  group:'ADVANCED PYTHON',
+  id:'decorators', title:'Decorators',
+  lesson:`
+    <p>One of the most reliably asked senior Python interview topics, and it builds directly on closures — a decorator <i>is</i> a closure that wraps a function.</p>
+    <p><b>What it does:</b> adds behaviour around an existing function without editing that function.</p>
+    <pre><code>def log_calls(func):
+    def wrapper(*args, **kwargs):
+        print(f"calling {func.__name__}")
+        result = func(*args, **kwargs)
+        print(f"{func.__name__} finished")
+        return result
+    return wrapper
+
+@log_calls
+def add(a, b):
+    return a + b
+
+add(2, 3)
+# calling add
+# add finished</code></pre>
+    <p><b>The @ syntax is pure shorthand.</b> This is the thing to say in an interview:</p>
+    <pre><code>@log_calls
+def add(a, b): ...
+
+# is exactly the same as:
+def add(a, b): ...
+add = log_calls(add)</code></pre>
+    <p>Once you see that, decorators stop being magic. <code>log_calls</code> takes a function, returns a replacement function, and the name is rebound to the replacement.</p>
+    <p><b>Why *args and **kwargs matter here:</b> the wrapper must accept any arguments, because it does not know what it is wrapping. <code>*args</code> collects positional arguments into a tuple; <code>**kwargs</code> collects keyword arguments into a dict.</p>
+    <p><b>The functools.wraps detail interviewers love:</b> without it, the decorated function loses its own name and docstring — <code>add.__name__</code> becomes "wrapper". Fix:</p>
+    <pre><code>from functools import wraps
+
+def log_calls(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+    return wrapper</code></pre>
+    <p><b>Where you have already met decorators:</b> <code>@app.get("/health")</code> in FastAPI registers your function as an endpoint. <code>@pytest.fixture</code> in testing. Knowing they are ordinary closures underneath is what turns framework code from magic into something you can reason about.</p>
+    <p><b>Common real uses:</b> logging, timing, retry-on-failure, caching, authentication checks, rate limiting — all cross-cutting concerns you want applied to many functions without duplicating code.</p>
+  `,
+  practice:[
+    {q:'Write a timing decorator that prints how long the wrapped function took.', hint:'time.time() before and after the call.', answer:`import time
+from functools import wraps
+
+def timed(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        print(f"{func.__name__} took {time.time()-start:.2f}s")
+        return result
+    return wrapper`},
+    {q:'Write a retry decorator that reruns the function up to 3 times if it raises an exception.', hint:'A loop with try/except inside the wrapper; re-raise if all attempts fail.', answer:`def retry(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        for attempt in range(3):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                if attempt == 2:
+                    raise
+                print(f"attempt {attempt+1} failed, retrying")
+    return wrapper`},
+    {q:'Explain out loud, without notes, why @decorator and func = decorator(func) are the same thing.', hint:'If this is not fluent, reread the shorthand section.'},
+    {q:'Add your timing decorator to the LLM call in your RAG system and observe real latency.', hint:'Directly useful — this is how latency monitoring actually gets implemented.'}
+  ],
+  quiz:[
+    {q:'What does @my_decorator above a function actually do?', a:'It rebinds the name: func = my_decorator(func)'},
+    {q:'Why does a decorator wrapper use *args and **kwargs?', a:'Because it must accept whatever arguments the wrapped function takes, without knowing them in advance'},
+    {q:'What does functools.wraps preserve?', a:'The original function name, docstring, and metadata, which the wrapper would otherwise replace'}
+  ],
+  links:[
+    {label:'Real Python — primer on decorators', url:'https://realpython.com/primer-on-python-decorators/'},
+    {label:'Official docs — functools.wraps', url:'https://docs.python.org/3/library/functools.html#functools.wraps'}
+  ]
+},
+{
+  group:'ADVANCED PYTHON',
+  id:'context-managers', title:'Context Managers',
+  lesson:`
+    <p>You have used these since the File I/O lesson without naming them. Any <code>with</code> statement is a context manager, and interviewers ask you to write your own.</p>
+    <p><b>What they guarantee:</b> setup happens, your code runs, and cleanup happens — <i>even if your code raises an exception</i>. That guarantee is the whole point.</p>
+    <pre><code>with open("notes.txt") as f:
+    data = f.read()
+    # file closes automatically, even if read() throws</code></pre>
+    <p><b>Writing your own, the class way</b> — two methods:</p>
+    <pre><code>class Timer:
+    def __enter__(self):
+        self.start = time.time()
+        return self            # this is what "as t" receives
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        print(f"took {time.time()-self.start:.2f}s")
+        # return False (or nothing) to let exceptions propagate
+
+with Timer() as t:
+    do_slow_thing()</code></pre>
+    <p><b>The shorter way, with a decorator and a generator</b> — this is where three concepts you know converge:</p>
+    <pre><code>from contextlib import contextmanager
+
+@contextmanager
+def timer():
+    start = time.time()
+    try:
+        yield                       # everything before = setup
+    finally:
+        print(time.time() - start)  # everything after = cleanup
+
+with timer():
+    do_slow_thing()</code></pre>
+    <p>Notice what that is: a <b>decorator</b> applied to a <b>generator</b>, where <code>yield</code> marks the pause point at which your <code>with</code> block runs. Setup before the yield, cleanup after, and <code>finally</code> guarantees cleanup even on exceptions.</p>
+    <p><b>Directly applicable to your expense tracker:</b> the fix for the never-closed SQLite connection is exactly this — <code>with sqlite3.connect("expenses.db") as conn:</code> handles commit and cleanup for you instead of passing conn between functions and hoping.</p>
+    <p><b>The interview question:</b> "what happens if an exception occurs inside a with block?" Answer: <code>__exit__</code> still runs, receiving the exception type, value, and traceback. If it returns True the exception is suppressed; anything else lets it propagate. Suppressing silently is usually a mistake.</p>
+  `,
+  practice:[
+    {q:'Write a context manager class that prints "entering" and "exiting", and confirm "exiting" still prints when the block raises an exception.', hint:'Raise something deliberately inside the with block.', answer:`class Noisy:
+    def __enter__(self):
+        print("entering")
+        return self
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        print("exiting")
+
+with Noisy():
+    raise ValueError("boom")
+# prints entering, exiting, then the traceback`},
+    {q:'Rewrite the same thing using @contextmanager and yield.', hint:'try/finally around the yield.', answer:`from contextlib import contextmanager
+
+@contextmanager
+def noisy():
+    print("entering")
+    try:
+        yield
+    finally:
+        print("exiting")`},
+    {q:'Fix the expense tracker: replace the passed-around conn and cursor with a with-statement per database function.', hint:'Each function opens what it needs and lets the context manager close it.'}
+  ],
+  quiz:[
+    {q:'What two methods does a class-based context manager need?', a:'__enter__ and __exit__'},
+    {q:'In an @contextmanager generator, what separates setup from cleanup?', a:'The yield — code before it is setup, code after (usually in a finally block) is cleanup'},
+    {q:'Does cleanup still run if the with block raises?', a:'Yes — that guarantee is the entire reason context managers exist'}
+  ],
+  links:[
+    {label:'Real Python — context managers and with', url:'https://realpython.com/python-with-statement/'},
+    {label:'Official docs — contextlib', url:'https://docs.python.org/3/library/contextlib.html'}
+  ]
+},
+{
+  group:'ADVANCED PYTHON',
+  id:'concurrency', title:'GIL, Threading vs Multiprocessing',
+  lesson:`
+    <p>The classic senior Python interview question, and the reason your asyncio module was only part of the picture. Expect to be asked this directly.</p>
+    <p><b>The GIL (Global Interpreter Lock)</b> is a lock inside CPython that allows only one thread to execute Python bytecode at a time. Consequence: threads do <b>not</b> give you true parallel computation in Python, no matter how many CPU cores you have.</p>
+    <p><b>The distinction everything hangs on:</b></p>
+    <ul>
+      <li><b>I/O-bound</b> — your program is waiting: network calls, API requests, disk reads, database queries. The CPU is idle.</li>
+      <li><b>CPU-bound</b> — your program is computing: number crunching, image processing, large loops. The CPU is saturated.</li>
+    </ul>
+    <p><b>The three tools, and when each is correct:</b></p>
+    <ul>
+      <li><b>asyncio</b> — I/O-bound, single thread, cooperative pausing at await points. Lowest overhead, best for many concurrent network calls. This is the right tool for calling several LLM APIs at once.</li>
+      <li><b>Threading</b> — also I/O-bound. The GIL is released while a thread waits on I/O, so threads do overlap usefully there. Useful with libraries that are not async-aware.</li>
+      <li><b>Multiprocessing</b> — CPU-bound. Separate processes, each with its own interpreter and its own GIL, so they genuinely run in parallel across cores. Costs more memory and requires data to be serialised between processes.</li>
+    </ul>
+    <p><b>The one-line answer to memorise:</b> I/O-bound goes to asyncio or threads; CPU-bound goes to multiprocessing; the GIL is why threads do not help CPU-bound work.</p>
+    <pre><code>from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+
+# I/O-bound: fetching many URLs
+with ThreadPoolExecutor(max_workers=10) as pool:
+    results = list(pool.map(fetch_url, urls))
+
+# CPU-bound: heavy computation
+with ProcessPoolExecutor() as pool:
+    results = list(pool.map(crunch_numbers, datasets))</code></pre>
+    <p>Note both use <code>with</code> — context managers again, handling worker cleanup.</p>
+    <p><b>Applied to your work:</b> embedding a large document is CPU-bound (multiprocessing helps). Calling an LLM API for each of 50 chunks is I/O-bound (asyncio helps). Getting that distinction right in an interview signals real experience rather than memorised trivia.</p>
+    <p><b>Worth knowing:</b> recent Python versions have introduced experimental free-threaded builds that remove the GIL, but the GIL remains the default behaviour and the expected interview answer. Mentioning that it is changing is a small bonus signal.</p>
+  `,
+  practice:[
+    {q:'Write a CPU-heavy function (sum a large range) and time it single-threaded, then with ThreadPoolExecutor. Observe that threading does not help.', hint:'This is the GIL, visible in your own terminal.'},
+    {q:'Run the same workload with ProcessPoolExecutor and compare. Explain the difference in one sentence.', hint:'Separate processes, separate GILs, real parallelism across cores.'},
+    {q:'Take an I/O-bound task (several API calls) and compare sequential versus ThreadPoolExecutor versus asyncio.gather.', hint:'All three finish faster than sequential; asyncio has the lowest overhead.'},
+    {q:'For three tasks in your RAG system, classify each as I/O-bound or CPU-bound and name the right tool.', hint:'PDF parsing, embedding, LLM calls, vector search — they are not all the same.'}
+  ],
+  quiz:[
+    {q:'What does the GIL prevent?', a:'More than one thread executing Python bytecode at a time, so threads do not give true parallel computation'},
+    {q:'Which tool for CPU-bound work, and why?', a:'Multiprocessing — separate processes each have their own interpreter and GIL, so they run genuinely in parallel'},
+    {q:'Why do threads still help with I/O-bound work despite the GIL?', a:'The GIL is released while a thread waits on I/O, so the waiting overlaps'}
+  ],
+  links:[
+    {label:'Real Python — the GIL explained', url:'https://realpython.com/python-gil/'},
+    {label:'Official docs — concurrent.futures', url:'https://docs.python.org/3/library/concurrent.futures.html'}
+  ]
+},
+{
+  group:'ADVANCED PYTHON',
+  id:'pythonic', title:'Comprehensions & Pythonic Idioms',
+  lesson:`
+    <p>Interviewers read fluency partly from idiom. Writing a Java-style loop where a comprehension belongs is a small signal that gets noticed.</p>
+    <p><b>List comprehensions</b> — build a list in one expression:</p>
+    <pre><code>squares = [n * n for n in numbers]
+big = [n for n in numbers if n > 100]
+labels = [x.upper() if x else "unknown" for x in names]</code></pre>
+    <p><b>Dict and set comprehensions</b> use the same shape:</p>
+    <pre><code>lengths = {word: len(word) for word in words}
+unique_categories = {e["category"] for e in expenses}</code></pre>
+    <p><b>Generator expressions</b> — identical syntax with parentheses, but lazy: values are produced one at a time instead of building the whole list. This connects straight to your generators module, and matters for large data.</p>
+    <pre><code>total = sum(e["amount"] for e in expenses)   # no intermediate list built</code></pre>
+    <p><b>When NOT to use a comprehension:</b> if it needs more than one condition plus a transformation, or spans multiple lines, a plain loop is clearer. Nested comprehensions are almost always less readable than the loop they replace. Knowing when to stop is itself a senior signal.</p>
+    <p><b>Idioms interviewers notice:</b></p>
+    <ul>
+      <li><code>enumerate(items)</code> instead of manually tracking an index — you already use this</li>
+      <li><code>zip(a, b)</code> to iterate two sequences together</li>
+      <li>Unpacking: <code>a, b = b, a</code> to swap; <code>first, *rest = items</code></li>
+      <li><code>dict.get(key, default)</code> instead of checking membership first — your counter pattern</li>
+      <li>f-strings for formatting, never string concatenation with +</li>
+      <li>Truthiness: <code>if not items:</code> rather than <code>if len(items) == 0:</code></li>
+      <li><code>any()</code> and <code>all()</code> for conditions across a sequence</li>
+      <li><code>collections.Counter</code> for counting, and <code>defaultdict</code> to avoid repetitive get-or-create code</li>
+    </ul>
+    <pre><code>from collections import Counter
+counts = Counter(codes)          # your dict counter, in one line
+print(counts.most_common(3))     # top three</code></pre>
+    <p><b>*args and **kwargs:</b> <code>*args</code> collects extra positional arguments into a tuple; <code>**kwargs</code> collects extra keyword arguments into a dict. Essential for decorators and any wrapper function.</p>
+  `,
+  practice:[
+    {q:'Rewrite your category-counting loop using collections.Counter, then compare readability with your original.', hint:'Counter(list_of_categories) does the whole thing.'},
+    {q:'Convert three loops in your existing code into comprehensions. Then find one that reads WORSE as a comprehension and revert it.', hint:'The reverted one is the important part of this exercise.'},
+    {q:'Write a function accepting any number of positional and keyword arguments and printing both.', hint:'def f(*args, **kwargs)', answer:`def show(*args, **kwargs):
+    print("positional:", args)
+    print("keyword:", kwargs)
+
+show(1, 2, name="Anu")
+# positional: (1, 2)
+# keyword: {'name': 'Anu'}`},
+    {q:'Replace a manual index counter somewhere in your code with enumerate, and a paired-iteration loop with zip.', hint:'Both are small, both get noticed in code review.'}
+  ],
+  quiz:[
+    {q:'What is the difference between a list comprehension and a generator expression?', a:'Brackets build the whole list in memory; parentheses produce values lazily, one at a time'},
+    {q:'When should you avoid a comprehension?', a:'When it spans multiple lines or nests — a plain loop is clearer, and knowing that is a senior signal'},
+    {q:'What do *args and **kwargs collect?', a:'*args gathers extra positional arguments into a tuple, **kwargs gathers extra keyword arguments into a dict'}
+  ],
+  links:[
+    {label:'Real Python — list comprehensions', url:'https://realpython.com/list-comprehension-python/'},
+    {label:'Official docs — collections module', url:'https://docs.python.org/3/library/collections.html'}
+  ]
+},
+{
+  group:'ADVANCED PYTHON',
+  id:'typing', title:'Type Hints & Dataclasses',
+  lesson:`
+    <p>Expected at senior level in modern Python codebases, and the foundation of FastAPI and Pydantic, which you will use for the API module.</p>
+    <p><b>Type hints</b> document what goes in and comes out. Python does not enforce them at runtime — they are for humans, editors, and static checkers like mypy.</p>
+    <pre><code>def calculate_total(expenses: list[dict]) -> float:
+    return sum(e["amount"] for e in expenses)
+
+def load_pdf(path: str) -> str: ...
+def chunk_text(text: str, size: int = 500) -> list[str]: ...</code></pre>
+    <p>You already wrote these in your PDF reader. The value: editors autocomplete correctly, and a reader knows the contract without reading the body.</p>
+    <p><b>Useful types beyond the basics:</b></p>
+    <pre><code>from typing import Optional
+
+def find(id: int) -> Optional[dict]:   # returns a dict or None
+    ...
+
+scores: dict[str, float]
+pair: tuple[int, str]</code></pre>
+    <p><b>Dataclasses</b> remove boilerplate from classes that mainly hold data:</p>
+    <pre><code>from dataclasses import dataclass
+
+@dataclass
+class Expense:
+    amount: float
+    category: str
+    date: str
+
+e = Expense(250.0, "food", "2026-07-29")
+print(e)   # Expense(amount=250.0, category='food', date='2026-07-29')</code></pre>
+    <p>That decorator generates <code>__init__</code>, a readable <code>__repr__</code>, and equality comparison automatically. Without it you would hand-write all three. Note it is a <b>decorator</b> — the same mechanism from that module.</p>
+    <p><b>Relevant to a decision you already made:</b> you chose functions over classes for the expense tracker, correctly. But if you had wanted a typed record with validation, a dataclass would have been the low-ceremony middle ground between a bare dict and a full class. Worth naming in an interview as the option you considered.</p>
+    <p><b>Where this leads:</b> Pydantic models look almost identical to dataclasses but validate at runtime and raise clear errors on bad input. That is what FastAPI uses to reject malformed requests before your code runs.</p>
+  `,
+  practice:[
+    {q:'Add type hints to every function in your expense tracker, including return types.', hint:'list[dict], float, str, None where nothing is returned.'},
+    {q:'Rewrite the expense record as a dataclass and compare with the dict version. Which reads better, and why?', hint:'Attribute access and a useful repr versus flexibility. Either answer is fine if justified.'},
+    {q:'Install mypy and run it against your code. Fix anything it flags.', hint:'pip install mypy, then mypy your_file.py'},
+    {q:'Write one function returning Optional[dict] and explain when None is returned.', hint:'Lookup functions that may find nothing are the classic case.'}
+  ],
+  quiz:[
+    {q:'Does Python enforce type hints at runtime?', a:'No — they are for readers, editors, and static checkers like mypy'},
+    {q:'What does @dataclass generate for you?', a:'__init__, __repr__, and equality comparison, removing boilerplate'},
+    {q:'How do Pydantic models differ from dataclasses?', a:'They validate at runtime and raise clear errors on bad input, which is how FastAPI rejects malformed requests'}
+  ],
+  links:[
+    {label:'Real Python — type checking guide', url:'https://realpython.com/python-type-checking/'},
+    {label:'Official docs — dataclasses', url:'https://docs.python.org/3/library/dataclasses.html'}
+  ]
+},
+{
+  group:'ADVANCED PYTHON',
+  id:'gotchas', title:'Classic Python Gotchas',
+  lesson:`
+    <p>These are deliberately asked to separate people who have written real Python from people who have read about it. Each one is short and each one appears constantly.</p>
+    <p><b>1. Mutable default arguments</b> — the single most asked gotcha.</p>
+    <pre><code>def add_item(item, basket=[]):    # BUG
+    basket.append(item)
+    return basket
+
+print(add_item("a"))   # ['a']
+print(add_item("b"))   # ['a', 'b']  <-- surprise</code></pre>
+    <p>The default list is created <b>once</b>, when the function is defined, and shared across every call. Fix:</p>
+    <pre><code>def add_item(item, basket=None):
+    if basket is None:
+        basket = []
+    basket.append(item)
+    return basket</code></pre>
+    <p><b>2. is vs ==</b> — <code>==</code> compares values; <code>is</code> compares identity (same object in memory). Use <code>is</code> only for None, True, False. Comparing numbers or strings with <code>is</code> appears to work sometimes because of interning, which makes the bug intermittent and worse.</p>
+    <p><b>3. Shallow vs deep copy</b></p>
+    <pre><code>import copy
+original = {"tags": ["a", "b"]}
+shallow = original.copy()
+shallow["tags"].append("c")
+print(original["tags"])   # ['a','b','c'] — inner list is shared
+
+deep = copy.deepcopy(original)   # fully independent</code></pre>
+    <p><b>4. Mutable objects passed to functions.</b> Python passes references. Mutating a list inside a function changes the caller's list; rebinding the name does not. This is exactly the bug in your PDF reader: <code>history = history[-10:]</code> rebound a local name, so the caller's list was never trimmed. That is not a small detail — it is a real defect you shipped, and understanding it now is worth more than reading about it abstractly.</p>
+    <p><b>5. Late binding in closures</b></p>
+    <pre><code>funcs = [lambda: i for i in range(3)]
+print([f() for f in funcs])   # [2, 2, 2], not [0, 1, 2]</code></pre>
+    <p>The lambdas capture the variable, not its value at creation time. Fix with a default argument: <code>lambda i=i: i</code>.</p>
+    <p><b>6. Modifying a list while iterating it</b> — skips elements unpredictably. Iterate over a copy, or build a new list with a comprehension.</p>
+  `,
+  practice:[
+    {q:'Run the mutable default argument example yourself and watch the list grow across calls.', hint:'Seeing it beats reading it.'},
+    {q:'Find and fix the history-trimming bug in your PDF reader properly, then prove the fix with a test.', hint:'Either mutate in place with slice assignment, or return the new list and reassign at the call site.', answer:`# Option A: mutate in place
+history[:] = history[-10:]
+
+# Option B: return it and reassign in the caller
+def trim(history):
+    return history[-10:]
+history = trim(history)`},
+    {q:'Demonstrate shallow versus deep copy on a nested structure and explain the difference in one sentence.', hint:'copy.copy versus copy.deepcopy on a dict containing a list.'},
+    {q:'Write the late-binding closure example, observe the wrong output, then fix it.', hint:'Default-argument capture: lambda i=i: i'}
+  ],
+  quiz:[
+    {q:'Why is a mutable default argument dangerous?', a:'It is created once at function definition and shared across all calls, so state leaks between them'},
+    {q:'When should you use is instead of ==?', a:'Only for None, True, and False — is compares identity, not value'},
+    {q:'Why did history = history[-10:] fail to trim the caller list?', a:'It rebound the local name to a new list; the caller still referenced the original untrimmed one'}
+  ],
+  links:[
+    {label:'Real Python — common Python gotchas', url:'https://realpython.com/python-mutable-default-arguments/'},
+    {label:'Official FAQ — arguments and mutability', url:'https://docs.python.org/3/faq/programming.html'}
+  ]
+},
+{
+  group:'FLUENCY',
+  id:'project-ladder', title:'Project Ladder (Level 1 to 8)',
+  lesson:`
+    <p>Eight projects, ascending. <b>Each level adds exactly ONE new thing</b> to the level before it — that is the whole design. The expense tracker felt heavy because storage, structure, validation, and testing all arrived at once. This ladder separates them.</p>
+    <p><b>Rules:</b> requirements only, no architecture given — that is the skill being trained. Do them in order. Do not skip to the AI levels; the fluency gap lives in levels 1 to 5. Each level should take one to three evenings, not a week.</p>
+
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:15px;margin:22px 0 8px;">Level 1 — Word Frequency Counter</h2>
+    <p><i>Adds: nothing new. Pure logic, one file, no persistence.</i></p>
+    <ul>
+      <li>Read a text file, count how often each word appears</li>
+      <li>Print the top 10 words with their counts</li>
+      <li>Ignore case and strip punctuation</li>
+      <li>Handle the file not existing without crashing</li>
+    </ul>
+    <p><b>Done when:</b> it runs, and the counting logic is a pure function you could test.</p>
+
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:15px;margin:22px 0 8px;">Level 2 — Reading List Manager</h2>
+    <p><i>Adds: persistence (JSON only, no database yet).</i></p>
+    <ul>
+      <li>Add a book (title, author, status: to-read or read)</li>
+      <li>List all books; filter by status</li>
+      <li>Mark a book as read</li>
+      <li>Survives restarting the program</li>
+      <li>3 tests on the pure logic</li>
+    </ul>
+    <p><b>Done when:</b> data persists, and no test touches the filesystem.</p>
+
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:15px;margin:22px 0 8px;">Level 3 — Currency or Weather CLI</h2>
+    <p><i>Adds: calling an external API.</i></p>
+    <ul>
+      <li>Take a city (or currency pair) as input, fetch live data from a free public API</li>
+      <li>Display a clean summary, not the raw JSON</li>
+      <li>Handle: no internet, bad city name, API returning an error status</li>
+      <li>Cache the last result so repeated identical queries do not re-call the API</li>
+    </ul>
+    <p><b>Done when:</b> every failure mode you can think of produces a helpful message rather than a traceback.</p>
+
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:15px;margin:22px 0 8px;">Level 4 — Library Lending System</h2>
+    <p><i>Adds: classes, design patterns, a real database. This is the architecture level.</i></p>
+    <ul>
+      <li>Books, members, and loans — a member borrows a book, returns it, and cannot borrow one already out</li>
+      <li>SQLite, with a schema you design</li>
+      <li>Storage must be swappable: the business logic should not know whether data came from SQLite or JSON (Repository pattern)</li>
+      <li>Search books by title or author</li>
+      <li>5+ tests, none touching the database</li>
+    </ul>
+    <p><b>Done when:</b> you can swap the storage layer without touching the lending rules — and you can explain out loud which patterns you used and why.</p>
+
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:15px;margin:22px 0 8px;">Level 5 — Library API</h2>
+    <p><i>Adds: a web layer. Same domain as level 4, so only the API is new.</i></p>
+    <ul>
+      <li>Wrap level 4 in FastAPI: endpoints to list books, borrow, return, search</li>
+      <li>Pydantic models for request and response bodies</li>
+      <li>Correct status codes: 404 for a missing book, 400 for borrowing one already out</li>
+      <li>Working interactive docs at /docs</li>
+      <li>Tests hitting the endpoints, not just the logic</li>
+    </ul>
+    <p><b>Done when:</b> someone else could use your API from a different program, knowing nothing about your code.</p>
+
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:15px;margin:22px 0 8px;">Level 6 — Meeting Notes Summariser</h2>
+    <p><i>Adds: the first LLM call. Deliberately no retrieval yet.</i></p>
+    <ul>
+      <li>Paste or load a block of text, get back a structured summary</li>
+      <li>Output must be structured JSON: summary, action items, decisions — parsed into Python objects, not printed as loose text</li>
+      <li>Handle the model returning malformed JSON without crashing</li>
+      <li>Track and display tokens used and time taken per call</li>
+    </ul>
+    <p><b>Done when:</b> you can run it 10 times and it never crashes on a bad response.</p>
+
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:15px;margin:22px 0 8px;">Level 7 — Multi-Document RAG</h2>
+    <p><i>Adds: retrieval, over several documents rather than one.</i></p>
+    <ul>
+      <li>Index multiple documents, not just one PDF</li>
+      <li>Answers must cite which document and page they came from</li>
+      <li>Refuses to answer when the information is not in any document</li>
+      <li>Conversational memory across turns</li>
+      <li>Exposed as a FastAPI endpoint (level 5 skill), not only a CLI</li>
+      <li>A small evaluation script: 10 questions with expected answers, reporting how many it got right</li>
+    </ul>
+    <p><b>Done when:</b> the evaluation script runs and you can state your accuracy number. That number is an interview asset.</p>
+
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:15px;margin:22px 0 8px;">Level 8 — Tool-Calling Agent</h2>
+    <p><i>Adds: the agent loop — the model decides what to do next.</i></p>
+    <ul>
+      <li>4 tools it can choose between, one of which queries your level 4 or 7 system</li>
+      <li>Handles multi-step questions requiring two or more tools in sequence</li>
+      <li>Max-iteration guard so it cannot loop forever</li>
+      <li>Full step logging: every reasoning step, tool call, and result</li>
+      <li>Sensible behaviour when a tool fails or returns garbage</li>
+    </ul>
+    <p><b>Done when:</b> you can show the step trace for a two-tool question and explain each decision the model made.</p>
+
+    <p style="margin-top:24px;"><b>Where the expense tracker fits:</b> it sits between levels 2 and 4 — persistence plus structure plus tests. Finish it if you want, but if it feels heavy, do levels 1 to 3 first and come back. Nothing is lost by reordering.</p>
+    <p><b>What to keep for the portfolio:</b> levels 4, 5, 7, and 8 are CV-worthy. Levels 1, 2, 3, and 6 are drills — build them, learn from them, do not polish them.</p>
+  `,
+  practice:[
+    {q:'Level 1 and 2 this week. Time-box each to one evening. If either takes longer than two, the gap is fluency and that is exactly what these are for.', hint:'Do not add features. The constraint is the point.'},
+    {q:'Before each level: 10-minute paper design. Nouns, verbs, what is stored, one tradeoff, out of scope.', hint:'This doubles as your architecture reps.'},
+    {q:'After each level: write one paragraph on the hardest part and how you solved it.', hint:'These paragraphs become your interview stories.'},
+    {q:'At level 4, deliberately swap the storage from SQLite to JSON to prove the Repository pattern actually works.', hint:'If you have to change the lending logic, the abstraction leaked. Fix it.'},
+    {q:'At level 7, run the evaluation script and record the accuracy number in your README.', hint:'Very few candidates can quote a measured number for their own RAG system.'}
+  ],
+  quiz:[
+    {q:'Why does each level add only one new thing?', a:'So the difficulty stays isolated — the expense tracker felt heavy because storage, structure, validation, and testing arrived at once'},
+    {q:'Which levels belong on your CV and which are drills?', a:'Levels 4, 5, 7, and 8 are portfolio-worthy; 1, 2, 3, and 6 are practice and should not be polished'},
+    {q:'What proves the Repository pattern is real rather than notional?', a:'Swapping the storage backend without touching the business logic'}
+  ],
+  links:[
+    {label:'Public APIs directory (for level 3)', url:'https://github.com/public-apis/public-apis'},
+    {label:'FastAPI tutorial (for level 5)', url:'https://fastapi.tiangolo.com/tutorial/'},
+    {label:'Make a README', url:'https://www.makeareadme.com/'}
+  ]
+},
+{
+  group:'ASSIGNMENTS',
+  id:'assign-1', title:'Assignment 1 — after Python Foundation',
+  lesson:`
+    <p><b>Cumulative checkpoint.</b> This exercises every topic in Stage 1 at once: variables and types, functions, error handling, file I/O, APIs and JSON. If you can build this unaided, Stage 1 is genuinely yours.</p>
+    <p><b>The brief: Log File Analyser (command line)</b></p>
+    <ul>
+      <li>Read a log file where each line looks roughly like: <code>2026-08-14 10:32:11 ERROR database connection failed</code></li>
+      <li>Parse each line into date, time, level, and message</li>
+      <li>Report: total lines, count per level (ERROR / WARN / INFO), and the 5 most common messages</li>
+      <li>Save the report as a JSON file</li>
+      <li>Fetch the current date-time from a public API and include it in the report as "generated_at"</li>
+      <li>Survive: file not found, a malformed line, and no internet</li>
+    </ul>
+    <p>Make your own sample log file with 50-100 lines, including a few deliberately broken ones.</p>
+
+    <p><b>Coverage check</b> — every requirement maps to a topic:</p>
+    <ul>
+      <li>Parsing lines into fields → <b>variables and data types</b></li>
+      <li>Separate parse / count / report functions → <b>functions</b></li>
+      <li>Missing file, broken line, no internet → <b>error handling</b></li>
+      <li>Reading the log, writing the report → <b>file I/O</b></li>
+      <li>Fetching the timestamp, writing JSON → <b>APIs and JSON</b></li>
+    </ul>
+
+    <p><b>Done when:</b> it runs on a good log, runs on a log with broken lines without crashing, runs with the network disconnected, and the counting logic sits in a function that takes a list and returns a dict — no printing inside it.</p>
+    <p><b>Do not:</b> add a database, classes, or a web interface. Those come later. The constraint is part of the assignment.</p>
+  `,
+  practice:[
+    {q:'Ten-minute paper design first: what functions exist, what does each take and return, what could fail.', hint:'Nouns and verbs. No code until this is written.'},
+    {q:'Build it. Time-box to two evenings. If it takes longer, note exactly where you stalled — that is the topic to revisit.', hint:'Stalling is diagnostic, not failure.'},
+    {q:'Self-check: can your counting function be tested by passing a list and checking the returned dict, with no file and no keyboard?', hint:'If not, the logic and the I/O are tangled. Split them.'},
+    {q:'Write one paragraph on the hardest part and how you solved it.', hint:'This becomes interview material.'}
+  ],
+  quiz:[
+    {q:'Which Stage 1 topic does handling a malformed log line exercise?', a:'Error handling — try/except around the risky parse'},
+    {q:'Why must the counting logic avoid printing?', a:'So it can be tested by passing arguments and checking the return value'},
+    {q:'What does stalling on a particular part tell you?', a:'Exactly which topic to revisit — it is a diagnostic, not a failure'}
+  ],
+  links:[
+    {label:'Public APIs directory', url:'https://github.com/public-apis/public-apis'},
+    {label:'Official docs — JSON module', url:'https://docs.python.org/3/library/json.html'}
+  ]
+},
+{
+  group:'ASSIGNMENTS',
+  id:'assign-2', title:'Assignment 2 — after Developer Core',
+  lesson:`
+    <p><b>Cumulative checkpoint.</b> Everything from Stage 1, plus Git, OOP, data structures, testing, SQL, and Docker. This is the first assignment that produces something CV-adjacent.</p>
+    <p><b>The brief: Habit Tracker (command line)</b></p>
+    <ul>
+      <li>Define habits (name, target frequency per week)</li>
+      <li>Mark a habit done for a given date, including backdated entries</li>
+      <li>Report: current streak per habit, completion rate this week, and which habits are behind target</li>
+      <li>SQLite storage with a schema you design</li>
+      <li>At least one class where a class genuinely earns its place — and a written justification for it</li>
+      <li>6+ tests, none of which touch the database</li>
+      <li>Git history with meaningful commits from scaffolding onward, not one dump</li>
+      <li>A Dockerfile that runs it</li>
+    </ul>
+
+    <p><b>Coverage check:</b></p>
+    <ul>
+      <li>Streak calculation, completion rates → <b>functions, data structures</b> (streaks are a genuine algorithm — think about how you detect consecutive days)</li>
+      <li>Schema design, queries, parameterised statements → <b>SQL</b></li>
+      <li>Habit as an entity with behaviour → <b>OOP</b>, and the justification matters more than the class</li>
+      <li>Bad dates, unknown habit names, empty database → <b>error handling</b></li>
+      <li>Pure logic tested with hand-made data → <b>testing</b></li>
+      <li>Incremental commits → <b>Git</b></li>
+      <li>Containerised → <b>Docker</b> (skip only if WSL is still blocking you; note it as a gap)</li>
+    </ul>
+
+    <p><b>Done when:</b> a stranger could clone the repo, read the README, and run it. Tests pass. You can explain why you used a class where you did, and why you did not elsewhere.</p>
+    <p><b>The hard part is the streak logic</b>, deliberately. It is the first assignment with a real algorithm in it — consecutive-day detection with gaps is genuinely fiddly, and working it out yourself is the point.</p>
+  `,
+  practice:[
+    {q:'Design the schema on paper before writing any SQL. What tables, what columns, what links them.', hint:'Habits and completions are probably two tables. Why?'},
+    {q:'Write the streak function FIRST, with tests, before any database code exists. Feed it hand-made date lists.', hint:'Test-first is easiest when the logic is pure — this is the ideal case to try it on.'},
+    {q:'Justify your class choice in one paragraph in the README: what state does it hold, and why would functions alone be worse?', hint:'If you cannot justify it, use functions — that is also a valid answer.'},
+    {q:'Deliberately break it: bad date format, habit that does not exist, empty database, duplicate entry for the same day.', hint:'Each fix is a commit and an interview story.'}
+  ],
+  quiz:[
+    {q:'Why should the streak function be written and tested before the database exists?', a:'It is pure logic — testing it in isolation is trivial, and it keeps the algorithm separate from storage'},
+    {q:'What makes a class justified rather than ceremony?', a:'It holds state that genuinely belongs together, and functions alone would be worse — if you cannot say why, use functions'},
+    {q:'What does a good commit history signal to a reviewer?', a:'That you built incrementally and professionally, rather than pasting a finished solution'}
+  ],
+  links:[
+    {label:'Python sqlite3 docs', url:'https://docs.python.org/3/library/sqlite3.html'},
+    {label:'pytest getting started', url:'https://docs.pytest.org/en/stable/getting-started.html'}
+  ]
+},
+{
+  group:'ASSIGNMENTS',
+  id:'assign-3', title:'Assignment 3 — after Advanced Python',
+  lesson:`
+    <p><b>A refactor assignment</b>, which is how senior work actually happens — you rarely start from scratch, you improve what exists. Take Assignment 2 and rebuild it using the Stage 3 toolkit. No new features.</p>
+    <p><b>The brief: refactor the Habit Tracker</b></p>
+    <ul>
+      <li><b>Decorators</b> — add a @timed decorator to database functions and a @log_calls decorator you can switch on for debugging</li>
+      <li><b>Context managers</b> — every database function opens and closes its own connection via <code>with</code>; no connection passed between functions</li>
+      <li><b>Type hints</b> — every function signature annotated; run mypy and fix what it flags</li>
+      <li><b>Dataclasses</b> — represent a habit and a completion as dataclasses instead of dicts or tuples</li>
+      <li><b>Comprehensions and idioms</b> — replace manual loops where a comprehension reads better; use Counter or defaultdict where they fit; revert any comprehension that reads worse</li>
+      <li><b>Generators</b> — add a function that streams completions one at a time instead of loading all of them, and explain in one line when that matters</li>
+      <li><b>Gotchas</b> — audit for mutable default arguments, accidental rebinding instead of mutation, and shallow-copy bugs. Write down anything you find</li>
+      <li><b>Concurrency</b> — add a function that fetches something for several habits at once, choosing correctly between asyncio, threads, or processes, and justify the choice in a comment</li>
+    </ul>
+
+    <p><b>Rules:</b> tests must still pass after every single change. Commit after each refactor, one topic per commit — so your history reads: "use context managers for db connections", "add type hints", "replace dicts with dataclasses". That commit log is itself the deliverable.</p>
+    <p><b>Done when:</b> mypy is clean, tests pass, and you can point at each Stage 3 topic in your own code and say what it bought you.</p>
+    <p><b>The senior signal here:</b> refactoring without breaking behaviour, in small verifiable steps, is exactly what technical-lead JDs mean by raising the bar. This assignment is that skill in miniature.</p>
+  `,
+  practice:[
+    {q:'Run the full test suite before starting. If tests do not pass now, fix that first — you cannot refactor safely without them.', hint:'This is the actual first rule of refactoring.'},
+    {q:'One topic per commit. Tests pass after each. Do not batch changes.', hint:'If something breaks, you know exactly which change did it.'},
+    {q:'Write a short REFACTOR.md listing each change, why you made it, and what it improved.', hint:'Interviewers love this document because it shows reasoning, not just output.'},
+    {q:'Find at least one real gotcha in your own code from the gotchas module. If you find none, look harder at anything that rebinds a name.', hint:'The history = history[-10:] bug in your RAG code is the pattern to hunt for.'}
+  ],
+  quiz:[
+    {q:'What is the first rule before refactoring anything?', a:'Have passing tests — otherwise you cannot know whether you broke behaviour'},
+    {q:'Why commit one refactor topic at a time?', a:'If something breaks, the culprit is obvious; the history also reads as deliberate professional work'},
+    {q:'What does a refactor assignment train that a new build does not?', a:'Improving existing code without changing behaviour — which is most of real senior work'}
+  ],
+  links:[
+    {label:'mypy — getting started', url:'https://mypy.readthedocs.io/en/stable/getting_started.html'},
+    {label:'Refactoring Guru — refactoring techniques', url:'https://refactoring.guru/refactoring/techniques'}
+  ]
+},
+{
+  group:'ASSIGNMENTS',
+  id:'assign-4', title:'Assignment 4 — after AI Fundamentals',
+  lesson:`
+    <p><b>Cumulative checkpoint.</b> Everything so far, plus LLM basics, RAG, and LLMOps. Unlike a tutorial follow-along, the spec here forces the decisions to be yours.</p>
+    <p><b>The brief: Grounded Q&A over your own notes</b></p>
+    <p>Use your own material as the corpus — your study notes, the daily log you already keep, or any set of documents you actually care about. Real data you know well makes wrong answers obvious, which is the whole point.</p>
+    <ul>
+      <li>Ingest multiple documents, not one</li>
+      <li>Chunk with overlap; your chunk size and overlap must be choices you can defend</li>
+      <li>Embed and store in a vector database</li>
+      <li>Retrieve relevant chunks and answer grounded strictly in them</li>
+      <li>Cite which document each answer came from</li>
+      <li>Refuse clearly when the answer is not in the corpus</li>
+      <li>Structured output: return JSON with answer, sources, and confidence — parsed into Python objects, handling malformed model output without crashing</li>
+      <li><b>Instrumentation</b>: log tokens used, latency, and which chunks were retrieved, for every query</li>
+      <li><b>Evaluation</b>: 10 questions with expected answers, and a script that reports how many the system got right</li>
+    </ul>
+
+    <p><b>Coverage check:</b></p>
+    <ul>
+      <li>Chunking, embeddings, retrieval → <b>RAG fundamentals</b></li>
+      <li>Prompting, structured output, refusal behaviour → <b>LLM basics</b></li>
+      <li>Token and latency logging, the evaluation script → <b>LLMOps</b></li>
+      <li>Malformed JSON, empty corpus, API failure → <b>error handling</b></li>
+      <li>Decorators for timing, context managers, type hints, dataclasses for the result object → <b>Stage 3</b></li>
+      <li>Tests on the pure parts: chunking, parsing, scoring → <b>testing</b></li>
+    </ul>
+
+    <p><b>Done when:</b> the evaluation script runs and produces an accuracy number you can state out loud. That number is worth more in an interview than any description of the architecture, because almost no candidate has one for their own system.</p>
+    <p><b>Deliberate difficulty:</b> writing 10 good evaluation questions is harder than it sounds. Include at least two whose answers are genuinely NOT in your corpus, so you are testing refusal as well as retrieval.</p>
+  `,
+  practice:[
+    {q:'Write the 10 evaluation questions and expected answers BEFORE building anything.', hint:'Two of them must be unanswerable from your corpus. Writing tests first works here too.'},
+    {q:'Build retrieval and inspect the retrieved chunks manually before adding any LLM call.', hint:'If retrieval is wrong, no amount of prompting fixes it.'},
+    {q:'Defend your chunk size and overlap in one paragraph. What breaks if chunks are too small? Too large?', hint:'Too small loses context; too large dilutes relevance and wastes tokens.'},
+    {q:'Run the evaluation, record the number, then change ONE thing (chunk size, number of chunks retrieved, or the prompt) and re-run. Did it improve?', hint:'This single loop is what LLMOps actually is.'}
+  ],
+  quiz:[
+    {q:'Why inspect retrieved chunks before adding the LLM?', a:'If retrieval is wrong, the answer will be wrong regardless of prompting — debug one layer at a time'},
+    {q:'Why include questions whose answers are not in the corpus?', a:'To test refusal behaviour, which is as important as retrieval in a grounded system'},
+    {q:'What makes the accuracy number valuable in an interview?', a:'It shows measured evaluation of your own system — very few candidates can quote one'}
+  ],
+  links:[
+    {label:'ChromaDB docs', url:'https://docs.trychroma.com/'},
+    {label:'sentence-transformers', url:'https://www.sbert.net/'}
+  ]
+},
+{
+  group:'ASSIGNMENTS',
+  id:'assign-5', title:'Assignment 5 — after Architecture',
+  lesson:`
+    <p><b>Final cumulative checkpoint.</b> Everything above, plus design patterns, FastAPI, and system design thinking. This one is portfolio-grade and belongs on your CV.</p>
+    <p><b>The brief: turn Assignment 4 into a service</b></p>
+    <ul>
+      <li><b>FastAPI</b> with endpoints for ingesting a document, asking a question, and retrieving evaluation results</li>
+      <li>Pydantic models for every request and response; correct status codes for missing documents, empty questions, and unbuilt indexes</li>
+      <li><b>Strategy pattern</b>: the embedding model and the LLM provider are both swappable without touching the retrieval or API code. Prove it by swapping one.</li>
+      <li><b>Repository pattern</b>: business logic does not know whether documents come from local files, a database, or object storage</li>
+      <li>A configuration layer so model names, chunk size, and retrieval count are settings, not hardcoded values</li>
+      <li><b>Async</b> where it genuinely helps, with a comment explaining why it helps there</li>
+      <li>Tests hitting the endpoints, not just the internals</li>
+      <li>Deployed somewhere reachable, with a README covering the architecture, your key decisions, and the evaluation number</li>
+    </ul>
+
+    <p><b>The written deliverable</b>, which matters as much as the code: a section in the README answering "how would this scale to 10,000 users?" Name where ingestion becomes a background job, what gets cached, what holds state, what does not, and where rate limiting belongs.</p>
+
+    <p><b>Done when:</b> someone can call your API from a different program knowing nothing about your code; you can swap the embedding model by changing one config value; and you can talk through the architecture for three minutes without notes.</p>
+    <p><b>Why this is the capstone:</b> it is the exact shape of the work in the JDs you are targeting — a production AI service with clean architecture, measured quality, and a deployment story. Everything before this was building the pieces.</p>
+  `,
+  practice:[
+    {q:'Before coding: draw the architecture on paper. Mark what is stateless, what holds state, what talks to what.', hint:'Ten minutes. This becomes the README diagram.'},
+    {q:'Implement the Strategy swap and actually run it with two different embedding models. If retrieval code needed changes, the abstraction leaked.', hint:'This is a pass/fail check on whether you really applied the pattern.'},
+    {q:'Write the scaling section of the README before you think you are ready. It exposes gaps in your understanding.', hint:'Queue, cache, stateless API, managed vector store, rate limits.'},
+    {q:'Record yourself explaining the architecture in three minutes. Listen back once.', hint:'Direct interview rehearsal for the question you will definitely be asked.'}
+  ],
+  quiz:[
+    {q:'How do you prove the Strategy pattern was really applied?', a:'Swap the implementation and confirm no other code needed changing'},
+    {q:'What belongs in configuration rather than code?', a:'Model names, chunk size, retrieval count — anything you might tune without changing logic'},
+    {q:'Why does the scaling section matter as much as the code?', a:'It is the interview question for these roles, and writing it exposes gaps before an interviewer does'}
+  ],
+  links:[
+    {label:'FastAPI tutorial', url:'https://fastapi.tiangolo.com/tutorial/'},
+    {label:'System Design Primer', url:'https://github.com/donnemartin/system-design-primer'}
+  ]
+}
+];
+
+/* ================= TRACKER PHASES =================
+   lesson: id of module in MODULES that this task links to (null = no lesson page) */
+const PHASES = [
+  {
+    id:'s1', tag:'STAGE 1 \u00b7 DONE', title:'Python foundation',
+    tasks:[
+      {text:'Variables & data types', lesson:'variables'},
+      {text:'Functions', lesson:'functions'},
+      {text:'Error handling', lesson:'errors'},
+      {text:'File I/O', lesson:'fileio'},
+      {text:'APIs & JSON', lesson:'apis'},
+      {text:'\u2b50 ASSIGNMENT 1 \u2014 Log file analyser (cumulative)', lesson:'assign-1'}
+    ]
+  },
+  {
+    id:'s2', tag:'STAGE 2 \u00b7 DONE', title:'Developer core',
+    tasks:[
+      {text:'Git & version control', lesson:'git'},
+      {text:'Object-oriented programming', lesson:'oop'},
+      {text:'Data structures essentials', lesson:'dsa'},
+      {text:'Testing basics (pytest)', lesson:'testing'},
+      {text:'SQL essentials', lesson:'sql'},
+      {text:'Docker & deployment basics', lesson:'docker'},
+      {text:'\u2b50 ASSIGNMENT 2 \u2014 Habit tracker (cumulative)', lesson:'assign-2'}
+    ]
+  },
+  {
+    id:'s3', tag:'STAGE 3 \u00b7 REVISIT', title:'Advanced Python',
+    tasks:[
+      {text:'Generators & yield', lesson:'generators'},
+      {text:'Closures', lesson:'closures'},
+      {text:'Async & asyncio', lesson:'asyncio'},
+      {text:'Decorators', lesson:'decorators'},
+      {text:'Context managers', lesson:'context-managers'},
+      {text:'GIL, threading vs multiprocessing', lesson:'concurrency'},
+      {text:'Comprehensions & Pythonic idioms', lesson:'pythonic'},
+      {text:'Type hints & dataclasses', lesson:'typing'},
+      {text:'Classic Python gotchas', lesson:'gotchas'},
+      {text:'\u2b50 ASSIGNMENT 3 \u2014 Refactor the habit tracker (cumulative)', lesson:'assign-3'}
+    ]
+  },
+  {
+    id:'s4', tag:'STAGE 4 \u00b7 DONE', title:'AI fundamentals',
+    tasks:[
+      {text:'LLM basics \u2014 models, tokens, prompting', lesson:'llm'},
+      {text:'RAG fundamentals', lesson:'rag'},
+      {text:'LLMOps fundamentals', lesson:'llmops'},
+      {text:'\u2b50 ASSIGNMENT 4 \u2014 Grounded Q&A over your own notes (cumulative)', lesson:'assign-4'}
+    ]
+  },
+  {
+    id:'s5', tag:'STAGE 5 \u00b7 DONE', title:'First build & CV',
+    tasks:[
+      {text:'Built and deployed the PDF reader RAG system (Streamlit, live)', lesson:'rebuild'},
+      {text:'CV rebuilt \u2014 ATS-safe, AI work positioned, live demo linked', lesson:'repositioning'},
+      {text:'Started applying \u2014 2-5 per day', lesson:'applying'}
+    ]
+  },
+  {
+    id:'s6', tag:'STAGE 6 \u00b7 NOW', title:'Fluency \u2014 the real gap',
+    tasks:[
+      {text:'Rebuild the PDF reader RAG system from a blank file, no copy-paste', lesson:'rebuild'},
+      {text:'Level 1 \u2014 Word frequency counter (pure logic)', lesson:'project-ladder'},
+      {text:'Level 2 \u2014 Reading list manager (adds persistence)', lesson:'project-ladder'},
+      {text:'Level 3 \u2014 Weather/currency CLI (adds external API)', lesson:'project-ladder'},
+      {text:'Level 4 \u2014 Library lending system (adds classes, patterns, SQLite)', lesson:'project-ladder'},
+      {text:'Level 5 \u2014 Library API (adds FastAPI layer)', lesson:'project-ladder'},
+      {text:'Finish the Expense Tracker \u2014 calculate functions, tests, README', lesson:'expense-tracker'},
+      {text:'Architecture reps \u2014 10 designs, 10 minutes each, paper only', lesson:'architecture'},
+      {text:'Design patterns \u2014 the 5 named ones interviewers ask about', lesson:'patterns'},
+      {text:'Book PTE Academic \u2014 gates the relocation route, weeks of lead time', lesson:'relocation'},
+      {text:'Start ACS or WES skills assessment', lesson:'relocation'},
+      {text:'Rebuild LinkedIn profile; recruiter-only Open to Work', lesson:'repositioning'},
+      {text:'Keep the JD gap log running', lesson:'applying'}
+    ]
+  },
+  {
+    id:'s7', tag:'STAGE 7 \u00b7 NEXT', title:'Interview readiness',
+    tasks:[
+      {text:'Arrays & hashing patterns', lesson:'dsa-arrays'},
+      {text:'Two pointers & sliding window', lesson:'dsa-pointers'},
+      {text:'Stacks & queues', lesson:'dsa-stack'},
+      {text:'Binary search & interview strategy', lesson:'dsa-binsearch'},
+      {text:'Grind 25-30 Easy problems on NeetCode (2-3 per session)', lesson:null},
+      {text:'Tell the RAG project story out loud in under 3 minutes, recorded', lesson:'interviews'},
+      {text:'Prep the "why are you moving" answer and the fixed-comp anchor', lesson:'interviews'}
+    ]
+  },
+  {
+    id:'s8', tag:'STAGE 8 \u00b7 BUILD', title:'Close the JD gaps',
+    tasks:[
+      {text:'REST APIs & FastAPI \u2014 wrap the RAG system in a real API', lesson:'fastapi'},
+      {text:'Level 6 \u2014 Meeting notes summariser (first LLM call)', lesson:'project-ladder'},
+      {text:'Level 7 \u2014 Multi-document RAG + evaluation script', lesson:'project-ladder'},
+      {text:'Level 8 \u2014 Tool-calling agent (the agent loop)', lesson:'project-ladder'},
+      {text:'Agentic AI \u2014 build a real tool-calling agent from scratch', lesson:'agentic'},
+      {text:'Cloud fundamentals \u2014 pick ONE provider, deploy something', lesson:'cloud'},
+      {text:'Redeploy the rebuilt RAG app to cloud, not just Streamlit', lesson:'cloud'},
+      {text:'Microservices & system design basics', lesson:'microservices'},
+      {text:'Add tests + a real README to the rebuilt project', lesson:'testing'},
+      {text:'Second project of your own design (unguided)', lesson:'project-solo'},
+      {text:'Optional: RAG troubleshooting assistant (guided spec)', lesson:'project-rag'},
+      {text:'Pandas & NumPy (one weekend, low priority)', lesson:'pandas'},
+      {text:'\u2b50 ASSIGNMENT 5 \u2014 Ship it as a service (capstone)', lesson:'assign-5'}
+    ]
+  },
+  {
+    id:'s9', tag:'STAGE 9 \u00b7 GOAL', title:'Offer & relocate',
+    tasks:[
+      {text:'Interview sprint \u2014 calibrate against early offers', lesson:'interviews'},
+      {text:'Anchor every recruiter call on fixed comp, no variable, upfront', lesson:'interviews'},
+      {text:'Compare offers on net income and lifestyle, not converted salary', lesson:'relocation'},
+      {text:'Close offer, negotiate, plan resignation & transition', lesson:'interviews'}
+    ]
+  }
+];
+
+/* ================= STATE ================= */
+const STORAGE_KEY = 'ai-transition-hub-state';
+let state = { tasks:{}, view:'home', openPhases:{s6:true} };
+let currentLesson = null;
+let syncStatus = 'unknown';   // 'ok' | 'error' | 'unknown'
+
+async function loadState(){
+  try{
+    const r = await window.storage.get(STORAGE_KEY);
+    if(r){ const saved = JSON.parse(r.value); state.tasks = saved.tasks || {}; }
+    syncStatus = 'ok';
+  }catch(e){
+    // First run has no saved key yet (expected), OR storage isn't available
+    // in this environment (e.g. standalone downloaded file). Either way,
+    // don't block the app -- just note sync is unavailable.
+    syncStatus = 'error';
+  }
+  render();
+}
+async function saveState(){
+  try{
+    await window.storage.set(STORAGE_KEY, JSON.stringify({tasks:state.tasks}));
+    syncStatus = 'ok';
+  }catch(e){
+    console.error('save failed', e);
+    syncStatus = 'error';
+  }
+}
+
+/* ---- Manual export / import fallback, for whenever cloud sync fails ---- */
+function exportProgress(){
+  const payload = JSON.stringify({tasks:state.tasks}, null, 2);
+  const blob = new Blob([payload], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = 'ai-transition-progress-' + stamp + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function triggerImport(){
+  document.getElementById('import-input').click();
+}
+
+function importProgress(ev){
+  const file = ev.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const parsed = JSON.parse(e.target.result);
+      if(parsed && typeof parsed.tasks === 'object'){
+        state.tasks = Object.assign({}, state.tasks, parsed.tasks);
+        saveState();
+        render();
+        alert('Progress imported successfully.');
+      }else{
+        alert('That file does not look like a valid progress backup.');
+      }
+    }catch(err){
+      alert('Could not read that file. Make sure it is an exported progress JSON.');
+    }
+  };
+  reader.readAsText(file);
+  ev.target.value = '';
+}
+
+function toggleTask(key, ev){
+  if(ev) ev.stopPropagation();
+  state.tasks[key] = !state.tasks[key];
+  saveState();
+  render();
+}
+function togglePhase(id){
+  state.openPhases[id] = !state.openPhases[id];
+  render();
+}
+function openLesson(id, ev){
+  if(ev) ev.stopPropagation();
+  currentLesson = id;
+  state.view = 'lesson';
+  render();
+  window.scrollTo({top:0, behavior:'instant'});
+}
+function goHome(){
+  state.view = 'home';
+  currentLesson = null;
+  render();
+  window.scrollTo({top:0, behavior:'instant'});
+}
+function resetAll(){
+  if(confirm('Clear all checked progress?')){
+    state.tasks = {};
+    saveState();
+    render();
+  }
+}
+
+/* ================= RENDER ================= */
+function render(){
+  if(state.view === 'lesson' && currentLesson){ renderLesson(); }
+  else{ renderHome(); }
+}
+
+function renderHome(){
+  const app = document.getElementById('app');
+  let totalTasks = 0, doneTasks = 0;
+
+  const phaseHtml = PHASES.map(phase => {
+    const taskHtml = phase.tasks.map((t, ti) => {
+      const key = phase.id+'-'+ti;
+      totalTasks++;
+      const checked = !!state.tasks[key];
+      if(checked) doneTasks++;
+      const lessonBtn = t.lesson
+        ? `<div class="lesson-link" onclick="openLesson('${t.lesson}', event)">open lesson \u2192</div>`
+        : '';
+      return `
+        <div class="task ${checked?'done':''}">
+          <div class="box ${checked?'checked':''}" onclick="toggleTask('${key}', event)"></div>
+          <div class="task-text" >
+            <span onclick="toggleTask('${key}', event)" style="cursor:pointer;">${t.text}</span>
+            ${lessonBtn}
+          </div>
+        </div>`;
+    }).join('');
+
+    const phaseDone = phase.tasks.filter((_,ti)=>state.tasks[phase.id+'-'+ti]).length;
+    const isOpen = !!state.openPhases[phase.id];
+
+    return `
+      <div class="phase ${isOpen?'open':''}">
+        <div class="phase-head" onclick="togglePhase('${phase.id}')">
+          <span class="tag">${phase.tag}</span>
+          <span class="title">${phase.title}</span>
+          <span class="count">${phaseDone}/${phase.tasks.length}</span>
+          <span class="chev">\u25B6</span>
+        </div>
+        <div class="phase-body">${taskHtml}</div>
+      </div>`;
+  }).join('');
+
+  const pct = totalTasks ? Math.round((doneTasks/totalTasks)*100) : 0;
+
+  app.innerHTML = `
+    <div class="eyebrow">Dell \u2192 AI Engineer</div>
+    <h1>AI Transition Hub</h1>
+    <div class="sub">Fluency over coverage \u00B7 applying now \u00b7 relocation track open</div>
+
+    ${syncStatus === 'error' ? `
+      <div class="sync-warn">
+        \u26A0 Progress isn't syncing to your account right now. Your checks are still saved on this
+        device for this session -- tap <b>export backup</b> below before closing, and
+        <b>import backup</b> on your other device to bring it over.
+      </div>` : ''}
+
+    <div class="gauge-card">
+      <div class="gauge-labels">
+        <span class="now">\u20B930L now</span>
+        <span class="target">\u20B975L / relocation</span>
+      </div>
+      <div class="gauge-track">
+        <div class="gauge-fill" style="width:${pct}%"></div>
+      </div>
+      <div class="gauge-foot">
+        <span>Progress toward target</span>
+        <span><b>${pct}%</b> of plan complete</span>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="n">${doneTasks}/${totalTasks}</div><div class="l">Tasks done</div></div>
+      <div class="stat"><div class="n">${PHASES.length}</div><div class="l">Phases</div></div>
+      <div class="stat"><div class="n">2x</div><div class="l">Min. to move</div></div>
+    </div>
+
+    ${phaseHtml}
+
+    <div class="backup-row">
+      <button class="backup-btn" onclick="exportProgress()">\u2913 export backup</button>
+      <button class="backup-btn" onclick="triggerImport()">\u2912 import backup</button>
+    </div>
+    <input type="file" id="import-input" accept="application/json" style="display:none" onchange="importProgress(event)">
+
+    <button class="reset" onclick="resetAll()">reset all progress</button>
+  `;
+}
+
+function renderLesson(){
+  const m = MODULES.find(x=>x.id===currentLesson);
+  if(!m){ goHome(); return; }
+  const idx = MODULES.findIndex(x=>x.id===currentLesson);
+  const prev = MODULES[idx-1];
+  const next = MODULES[idx+1];
+
+  const practiceHtml = m.practice.map(p=>`
+    <div class="practice-item">
+      <div>${p.q}</div>
+      ${p.hint? `<details><summary>hint</summary><div class="hint-box">${p.hint}</div></details>`:''}
+      ${p.answer? `<details><summary>show answer</summary><div class="answer-box"><pre><code>${p.answer}</code></pre></div></details>`:''}
+    </div>
+  `).join('');
+
+  const quizHtml = m.quiz.map(q=>`
+    <div class="quiz-block">
+      <div class="quiz-q">${q.q}</div>
+      <details><summary>reveal answer</summary><div class="answer-box">${q.a}</div></details>
+    </div>
+  `).join('');
+
+  const linksHtml = m.links.map(l=>`
+    <a class="link-item" href="${l.url}" target="_blank" rel="noopener">
+      <span>${l.label}</span><span class="arrow">open \u2197</span>
+    </a>
+  `).join('');
+
+  document.getElementById('app').innerHTML = `
+    <button class="back" onclick="goHome()">\u2190 back to tracker</button>
+    <div class="eyebrow">${m.group}</div>
+    <h1>${m.title}</h1>
+    <div class="sub">Lesson ${idx+1} of ${MODULES.length}</div>
+
+    <h2>Lesson</h2>
+    ${m.lesson}
+
+    <h2>Practice</h2>
+    <div class="card">${practiceHtml}</div>
+
+    <h2>Quiz</h2>
+    <div class="card">${quizHtml}</div>
+
+    <h2>Go deeper</h2>
+    <div class="links">${linksHtml}</div>
+
+    <div class="module-nav-btns">
+      ${prev? `<button class="nb" onclick="openLesson('${prev.id}')">\u2190 ${prev.title}</button>` : '<span></span>'}
+      ${next? `<button class="nb" onclick="openLesson('${next.id}')">${next.title} \u2192</button>` : '<span></span>'}
+    </div>
+  `;
+}
+
+loadState();
+</script>
+</body>
+</html>
